@@ -1,0 +1,68 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: slateguard
+  labels:
+    app: slateguard
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "2"
+        run.googleapis.com/cpu-throttling: "true"
+    spec:
+      serviceAccountName: slateguard-runtime@PROJECT_SET_AT_DEPLOY_TIME.iam.gserviceaccount.com
+      containerConcurrency: 20
+      # A cold ClickHouse Cloud query can take longer than the normal request
+      # path; this bounds the end-to-end proof request without retrying writes.
+      timeoutSeconds: 180
+      containers:
+        - image: IMAGE_SET_AT_DEPLOY_TIME
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            - name: SLATEGUARD_ENV
+              value: production
+            - name: GOOGLE_CLOUD_PROJECT
+              value: PROJECT_SET_AT_DEPLOY_TIME
+            - name: GOOGLE_GENAI_USE_ENTERPRISE
+              value: "TRUE"
+            - name: GOOGLE_GENAI_LOCATION
+              value: us-central1
+            - name: SG_AGENT_RUNTIME_LOCATION
+              value: us-central1
+            - name: SG_CHANGE_PACKET_RUNTIME_RESOURCE
+              value: AGENT_RUNTIME_SET_AT_DEPLOY_TIME
+            - name: CLICKHOUSE_PORT
+              value: "8443"
+            - name: CLICKHOUSE_SECURE
+              value: "true"
+            - name: CLICKHOUSE_VERIFY
+              value: "true"
+            - name: CLICKHOUSE_CONNECT_TIMEOUT
+              value: "30"
+            - name: CLICKHOUSE_SEND_RECEIVE_TIMEOUT
+              value: "90"
+            - name: CLICKHOUSE_MCP_QUERY_TIMEOUT
+              value: "120"
+            - name: SLATEGUARD_DEMO_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: slateguard-demo-session-secret
+                  key: latest
+            - name: CLICKHOUSE_READER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: slateguard-ch-reader-password
+                  key: latest
+            - name: CLICKHOUSE_WRITER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: slateguard-ch-writer-password
+                  key: latest
+          # CLICKHOUSE_HOST, CLICKHOUSE_DATABASE, reader/writer usernames, and
+          # project-specific values are set at deploy time outside source control.

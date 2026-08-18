@@ -1,0 +1,22 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=infra/Dockerfile
+      - --tag=${_IMAGE}
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - run
+      - --rm
+      - --entrypoint
+      - python
+      - ${_IMAGE}
+      - -m
+      - unittest
+      - discover
+      - -s
+      - backend/tests
+      - -v
+images:
+  - ${_IMAGE}

@@ -1,0 +1,1 @@
+"""SlateGuard application package."""

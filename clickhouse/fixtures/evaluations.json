@@ -1,0 +1,27 @@
+{
+  "dataset": "SlateGuard fictional production v1",
+  "cases": [
+    {
+      "id": "happy-path",
+      "expected_readiness": "At risk",
+      "expected_findings": ["continuity_conflict", "schedule_dependency"],
+      "expected_followup": true
+    },
+    {
+      "id": "missing-dailies",
+      "expected_readiness": "Review required",
+      "expected_findings": [],
+      "expected_followup": false
+    },
+    {
+      "id": "contradictory-dailies",
+      "expected_readiness": "Review required",
+      "expected_findings": [],
+      "expected_followup": false
+    },
+    {
+      "id": "unsupported-revision",
+      "expected_status": 422
+    }
+  ]
+}

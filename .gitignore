@@ -1,0 +1,33 @@
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+service-account*.json
+*-credentials.json
+.devpost-hackathon-state.json
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.tsbuildinfo
+coverage.xml
+htmlcov/
+
+# JavaScript and build output
+node_modules/
+dist/
+build/
+.next/
+
+# Local editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Generated demo data and recordings
+local-data/
+recordings/
