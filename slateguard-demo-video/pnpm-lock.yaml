@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@remotion/captions':
+        specifier: 4.0.512
+        version: 4.0.512
       '@remotion/cli':
         specifier: 4.0.512
         version: 4.0.512(lightningcss@1.31.1)(postcss@8.5.26)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@5.9.3)

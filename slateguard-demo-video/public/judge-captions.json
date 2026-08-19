@@ -1,0 +1,18 @@
+[
+  { "text": "Production changes rarely stay isolated.", "startMs": 0, "endMs": 5000, "timestampMs": null, "confidence": null },
+  { "text": "SlateGuard turns a creative change into a current, grounded decision.", "startMs": 5000, "endMs": 10000, "timestampMs": null, "confidence": null },
+  { "text": "Scene 12 changes from a blue jacket to black. Scene 11 has already been captured, and Scenes 13 and 14 are scheduled next.", "startMs": 10000, "endMs": 18000, "timestampMs": null, "confidence": null },
+  { "text": "Before anyone acts, SlateGuard shows cited evidence, the affected scenes, risk, and named owners.", "startMs": 18000, "endMs": 30000, "timestampMs": null, "confidence": null },
+  { "text": "This is the live review workspace. The change queue scopes the request.", "startMs": 30000, "endMs": 37000, "timestampMs": null, "confidence": null },
+  { "text": "The decision brief keeps cited evidence visible.", "startMs": 37000, "endMs": 44000, "timestampMs": null, "confidence": null },
+  { "text": "Risk, affected scenes, and human owners stay beside the action.", "startMs": 44000, "endMs": 50000, "timestampMs": null, "confidence": null },
+  { "text": "The ClickHouse reader MCP retrieves only the relevant production window: prior continuity, the revision, and next scheduled dependencies.", "startMs": 50000, "endMs": 60000, "timestampMs": null, "confidence": null },
+  { "text": "Archive, unrelated, and unscheduled work are excluded before Gemini explains impact.", "startMs": 60000, "endMs": 70000, "timestampMs": null, "confidence": null },
+  { "text": "A separate append-only writer records the revision. The reader returns curated evidence. The Change Packet is grounded in those facts.", "startMs": 70000, "endMs": 80000, "timestampMs": null, "confidence": null },
+  { "text": "Gemini explains the evidence; it does not run SQL or create the consequential task.", "startMs": 80000, "endMs": 90000, "timestampMs": null, "confidence": null },
+  { "text": "A human owner reviews the cited impact and creates the follow-up for Wardrobe and the Assistant Director.", "startMs": 90000, "endMs": 100000, "timestampMs": null, "confidence": null },
+  { "text": "SlateGuard reads the receipt through the safe path and confirms readiness changed from At risk to Follow-up created.", "startMs": 100000, "endMs": 110000, "timestampMs": null, "confidence": null },
+  { "text": "That is why ClickHouse is not background storage. It is the time-aware memory the agent must consult for current context.", "startMs": 110000, "endMs": 120000, "timestampMs": null, "confidence": null },
+  { "text": "Its curated views keep irrelevant history out and give the agent a fast, governed evidence path.", "startMs": 120000, "endMs": 130000, "timestampMs": null, "confidence": null },
+  { "text": "Current context. Grounded decision. Human action. That’s SlateGuard.", "startMs": 130000, "endMs": 140000, "timestampMs": null, "confidence": null }
+]

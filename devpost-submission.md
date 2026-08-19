@@ -1,152 +1,133 @@
-# SlateGuard — Evidence-First Production Change Control
+# SlateGuard — Evidence Before Action
 
-## One-line Summary
+## Devpost one-line pitch
 
-SlateGuard turns a creative production revision into a ClickHouse-backed evidence packet, a human-owned follow-up, and a verified shoot-readiness update.
+SlateGuard turns a film-production revision into ClickHouse-backed evidence, a bounded Gemini Change Packet, a human-owned follow-up, and a reader-verified readiness receipt.
 
-## Problem
+## Description
 
-Film and television changes rarely stay isolated. A seemingly simple request—change Scene 12's wardrobe from a blue jacket to a black jacket—can conflict with completed dailies, affect upcoming call sheets, and require action from several departments. Today's scripts, messages, and spreadsheets make it hard for a script supervisor to see the evidence, understand downstream impact, and leave a durable record of the decision.
+### The problem
 
-## Solution
+Production changes rarely stay isolated. A request as small as changing Scene 12's wardrobe from a blue jacket to a black jacket can conflict with already-shot dailies, affect the next call sheet, and require coordinated action from Wardrobe and the Assistant Director. The information usually exists, but across notes, production records, and schedules that are hard to consult under time pressure. That is how a creative change becomes a continuity or shoot-day risk.
 
-SlateGuard is a Continuity Command Desk for a single high-stakes revision loop. Before the agent explains an impact, its Impact Pulse narrows the ClickHouse context to Scene 11 history, the Scene 12 revision, and the next scheduled dependencies. A script supervisor applies the revision, then SlateGuard writes the change through a constrained ClickHouse writer MCP path, retrieves curated production evidence through a separate reader MCP path, and presents a grounded Change Packet. The operator can create a follow-up only after seeing the evidence; the product then persists and reader-verifies the resulting readiness transition.
+### What SlateGuard does
 
-The demo uses six self-authored fictional production scenes. Its core workflow changes Scene 12 from a blue jacket to a black jacket, surfaces Scene 11 dailies and scheduled dependencies, assigns Wardrobe and the Assistant Director, and ends with a traceable decision receipt.
+SlateGuard is an evidence-first Continuity Command Desk for that decision. A script supervisor applies a prepared Scene 12 wardrobe revision. SlateGuard then:
 
-## Why This Matters
+1. writes the typed revision event through a constrained **ClickHouse writer MCP** path;
+2. retrieves only the relevant, current production context through a separate read-only **ClickHouse reader MCP** path;
+3. uses deterministic rules to identify the continuity conflict and downstream scheduled dependencies;
+4. asks a schema-constrained Gemini Change Packet agent to explain only the supplied evidence; and
+5. lets the human supervisor create the follow-up. The system writes that decision, then reads it back through the reader path before displaying a readiness receipt.
 
-SlateGuard turns an ambiguous creative request into an accountable operational decision. It keeps a human in charge of the consequential action while making the relevant source evidence and system trace visible first. That pattern can help productions catch continuity and scheduling risk before it becomes a costly shoot-day surprise.
+The built demo uses six self-authored fictional scenes. Its one judge-visible loop is deliberately narrow: **blue jacket → black jacket** in Scene 12, Scene 11 dailies and two upcoming dependencies as evidence, a Wardrobe + Assistant Director follow-up, and the verified transition from **At risk** to **Follow-up created**.
 
-## How We Used AI
+### Why ClickHouse is essential
 
-SlateGuard uses a schema-constrained Gemini Change Packet agent on Google Cloud to turn bounded, retrieved production facts into a readable impact explanation. The agent receives curated evidence and deterministic findings—not arbitrary database access—and its output is validated against the allowed evidence IDs and owners. If evidence is missing, contradictory, unsupported, or the model is unavailable, the workflow fails closed to an explicit review state rather than inventing a conclusion.
+SlateGuard treats ClickHouse as time-aware production memory, not background storage. Before an agent explains a change, the Impact Pulse queries only the established Scene 11 history, active Scene 12 revision, and the next scheduled dependencies. Archive, unrelated, and unscheduled records are excluded by the fixed reader-MCP queries before they reach the agent.
 
-## How We Used Codex
-
-Codex was used as an engineering partner to scope the narrow judge-visible workflow, turn it into a PRD and technical specification, implement the React/TypeScript command desk and FastAPI service, create the least-privilege ClickHouse MCP boundary, build test coverage, and diagnose deployment issues. It also iterated the ClickHouse-adjacent visual system, prepared the Cloud Run container and Cloud Build test gate, and verified the hosted evidence loop without exposing credentials or raw production endpoints.
-
-## Key Features
-
-- **Evidence-first change control:** the interface makes the creative revision, source evidence, impact assessment, and human action legible in that order.
-- **Live ClickHouse relevance pulse:** fixed reader-MCP aggregates surface only the active production window; archive, unrelated, and unscheduled work is excluded by policy before the agent acts.
-- **Separated ClickHouse MCP identities:** a reader can query only curated views; a writer can append approved event records but cannot read production data or drop data.
-- **Grounded Change Packet:** Gemini explains only the bounded evidence it is given and distinguishes a verified result from a review-required state.
-- **Human-owned follow-up:** SlateGuard does not autonomously create a consequential production task; an operator decides after reviewing the evidence.
-- **Verified readiness receipt:** the follow-up and readiness transition are written, then checked back through the reader path before the receipt is shown.
-- **Safe public-demo sessions:** short-lived, session-scoped event history and idempotency controls prevent one demonstration from overwriting another.
-
-## Architecture
+The ClickHouse integration is visible in the core loop:
 
 ```text
-React / TypeScript Command Desk
-        |
-        v
-FastAPI service on Cloud Run
-        |------------------------------|
-        v                              v
-Gemini Change Packet agent       Official mcp-clickhouse sidecars
-(structured, bounded facts)      reader: curated views only
-                                  writer: append-only event templates
-                                           |
-                                           v
-                                  ClickHouse Cloud production memory
+revision → writer MCP → reader MCP evidence → Gemini explanation → human decision → writer MCP → reader-verified receipt
 ```
 
-The browser never receives database credentials or arbitrary SQL capability. Deterministic backend rules own typed writes and impact decisions; the reader MCP path supplies evidence; the agent explains supplied facts; and the operator alone creates the follow-up.
+The browser and model never receive raw database credentials or arbitrary SQL. Reader and writer processes use separate identities: the reader is limited to curated views, and the writer only appends named event records. The agent is an explanation layer, not an authority layer.
 
-## Testing Instructions
+### Gemini and Google Cloud Agent Builder
 
-1. Open the public demo URL below in a fresh browser session.
-2. Confirm the Command Desk shows the Scene 12 blue-jacket to black-jacket revision and a verified runtime status.
-3. Select **Apply revision**. The trace should show writer persistence, reader evidence retrieval, and Change Packet validation.
-4. Inspect the cited dailies and schedule evidence, including the affected owners.
-5. Select **Create follow-up** and confirm the decision receipt names the owners and the reader-verified readiness transition.
-6. For automated validation, Cloud Build runs the backend unit suite before an image is deployed; the current build gate covers 40 backend tests across API, MCP boundary, flow, and agent-contract behavior.
+The Change Packet uses Google ADK and Gemini with a structured response schema. It receives bounded facts, approved evidence IDs, deterministic findings, and allowed owners—not general database access. Its output is rejected if it cites unsupported evidence, changes a deterministic decision state, or recommends an unapproved owner. When the model path is unavailable or invalid, the product falls back to factual deterministic copy rather than inventing a claim.
 
-## Public Demo Link
+The hosted application runs on Google Cloud Run. The project also includes the deployed Google Agent Runtime / Vertex AI Change Packet path used for the Gemini structured-output proof. Cloud-managed configuration keeps the runtime secrets outside the browser and source repository.
 
-https://sprint2---slateguard-vseh3ye7mq-uc.a.run.app
+### What makes it different
 
-The live demo is currently deployed on Google Cloud Run. Its public Sprint 2 build has been browser-verified through writer persistence, reader retrieval, grounded Change Packet validation, and the live ClickHouse Impact Pulse. It uses self-authored fictional production data only.
+SlateGuard is not a generic production chatbot or dashboard. It makes the sequence of authority unmistakable:
 
-## Public Repository Link
+- **Evidence before action:** source records and deterministic impact come before the follow-up control.
+- **Curated agent context:** the agent can explain the current decision window without receiving stale or irrelevant production memory.
+- **Human ownership:** the consequential production task is created by the supervisor, not the model.
+- **Verified closure:** a decision receipt is shown only after the durable follow-up and readiness event are read back through the protected reader path.
 
-https://github.com/ezrawestover1-hub/slateguard-agentic-cinema
+### Testing and verification
 
-The public repository contains the MIT-licensed source, ClickHouse schemas and probes, deployment configuration, visual assets, demo captures, and the timed demo script. It was scanned before release for tracked secrets and deployment credentials.
+- 40 backend tests cover the API contracts, fixed ClickHouse MCP boundary, production-memory parsing, session/idempotency behavior, and Change Packet validation.
+- The official Python `mcp-clickhouse` integration was verified with real reader → writer → reader behavior, including negative permission checks.
+- The six-scene fictional schema and curated ClickHouse views support the exact Scene 12 evidence path shown in the product.
+- A deployed Gemini structured Change Packet proof validates citations, deterministic status, and the allowed Wardrobe + Assistant Director recommendation.
+- The public Cloud Run app was exercised through revision persistence, reader evidence retrieval, grounded Change Packet validation, human follow-up, and reader-verified receipt.
 
-## Demo Video
+### Built with
 
-**TODO — upload the final public video link.** The submission asset is rendered and validated locally at `slateguard-demo-video/out/slateguard-proof-cut.mp4`: 180 seconds, 1920×1080, H.264, caption-led, with the deployed Impact Pulse and reader-verified receipt. The strongest final upload will intercut it with one uninterrupted live browser recording using the matching narration in `slateguard-demo-video/NARRATION.md`.
+React, TypeScript, Vite, Python, FastAPI, Google Cloud Run, Vertex AI / Google ADK / Gemini, Google Agent Runtime, ClickHouse Cloud, official `mcp-clickhouse`, Docker, Cloud Build, and GitHub Actions-compatible project tooling.
 
-### Recommended 3-minute cut
+## Links
 
-| Time | What the judge sees | Proof point |
+- **Hosted project:** https://sprint2---slateguard-vseh3ye7mq-uc.a.run.app
+- **Open-source repository:** https://github.com/ezrawestover1-hub/slateguard-agentic-cinema
+- **License:** MIT (visible in the repository)
+- **Demo video:** **TODO — upload the final 2:20 functional, captioned cut to publicly visible YouTube or Vimeo, then paste the URL here.** Local render: `slateguard-demo-video/out/slateguard-judge-cut-140s.mp4`.
+
+## Demo-video rundown (2:20)
+
+| Time | Judge sees | It proves |
 | --- | --- | --- |
-| 0:00–0:15 | The blue-to-black Scene 12 revision and why it can affect a shoot | Clear production problem |
-| 0:15–0:45 | Apply the revision in the Command Desk | The core operator action |
-| 0:45–1:15 | Writer → reader → Change Packet trace resolves | ClickHouse is active in the core loop |
-| 1:15–1:45 | Cited Scene 11 dailies and downstream schedule evidence | Grounded evidence, not a generic chat answer |
-| 1:45–2:15 | Create the human-owned follow-up and show the verified receipt | Durable human decision and readiness update |
-| 2:15–2:45 | Show the architecture / trust boundary | Separate reader-writer MCP roles and safe AI boundary |
-| 2:45–3:00 | Restate the benefit: evidence before action | A reusable operational-control pattern |
+| 0:00–0:10 | The costly production-change problem | Specific media-and-entertainment use case |
+| 0:10–0:30 | Command Desk and prepared Scene 12 revision | A complete product surface, not a chat mockup |
+| 0:30–0:50 | Guided live-workspace tour | The evidence, decision, owner, and readiness areas are usable |
+| 0:50–1:10 | ClickHouse reader query / Impact Pulse | Relevant, current context is filtered before the agent reasons |
+| 1:10–1:30 | Writer → reader → Change Packet trace | Partner technology is indispensable to the core loop |
+| 1:30–1:50 | Human follow-up and read-back receipt | Human authority plus durable verified closure |
+| 1:50–2:20 | Agent-memory architecture and close | Secure, credible design and product impact |
 
-## Screenshot Shot List
+The render has English on-screen captions. A natural voiceover will be mixed to the same timing before upload.
 
-1. **Command Desk overview** — Scene 12 revision visible before action, premium black/green product shell, and verified runtime status.
-2. **Live evidence trace** — the three resolved stages: writer persistence, reader retrieval, and grounded Change Packet validation.
-3. **Source evidence panel** — Scene 11 dailies plus scheduled dependencies with evidence IDs and affected owners.
-4. **Decision receipt** — Wardrobe and Assistant Director follow-up plus reader-verified readiness update.
-5. **Trust-boundary / architecture frame** — concise view of Gemini, Cloud Run, official ClickHouse MCP reader/writer sidecars, and ClickHouse Cloud.
-6. **Impact Pulse** — the active-scene scope and live reader-MCP aggregate counts, shown before the revision action.
+## Screenshot plan
 
-Final live-browser captures, all using the self-authored fictional demo data:
+1. **Command Desk, before action** — revision, current readiness, and dominant Apply Revision action.
+2. **Evidence and decision brief** — relevant source records, deterministic risk, owners, and explanation.
+3. **Live trace** — writer persistence, reader retrieval, and Change Packet validation.
+4. **Decision receipt** — human-created follow-up and reader-verified readiness transition.
+5. **Impact Pulse** — bounded ClickHouse relevance counts before the change is applied.
 
-- `docs/demo-captures/01-command-desk-before.png` — the initial revision, cited evidence, owners, and protected path before action.
-- `docs/demo-captures/02-revision-trace-confirmed.png` — writer persistence, reader retrieval, and grounded Change Packet validation.
-- `docs/demo-captures/03-followup-receipt-verified.png` — reader-verified action receipt and `At risk → Follow-up created` readiness transition.
-- `docs/demo-captures/04-impact-pulse-preview.png` — local release-candidate visual check of the active-scope pulse.
-- `docs/demo-captures/05-impact-pulse-deployed.jpg` — deployed Cloud Run capture showing the live reader-MCP production window and the confirmed revision trace.
-- `docs/demo-captures/06-deployed-decision-receipt.jpg` — deployed Cloud Run capture showing the human-owned follow-up and reader-verified `At risk → Follow-up created` receipt.
+Use the live captures already in `docs/demo-captures/`; do not upload older dark-shell design references.
 
-Earlier local design references remain available for comparison only:
+## Devpost required-field worksheet
 
-- `frontend/design-reference/command-desk-local-v1.png`
-- `frontend/design-reference/command-desk-mobile-v1.png`
-- `frontend/design-reference/command-desk-concept-v1.png`
+These values are ready to paste, except entries marked **confirm**. Do not submit the form until the video URL and all confirmations are complete.
 
-## Submission Readiness Notes
+| Devpost field | Draft answer |
+| --- | --- |
+| Submitter Type | Individual |
+| Organization name | N/A |
+| Government employee | **Confirm before submit** |
+| Country of residence | United States — **confirm before submit** |
+| Canada province | N/A |
+| Project new or existing prior to July 27, 2026? | New |
+| Partner track | Clickhouse |
+| Team size | 1 |
+| Open-source repository | https://github.com/ezrawestover1-hub/slateguard-agentic-cinema |
+| Hosted project | https://sprint2---slateguard-vseh3ye7mq-uc.a.run.app |
+| Google Cloud products | Google Cloud Run for the public FastAPI + React service; Vertex AI and Google ADK / Agent Runtime for Gemini structured Change Packets; Artifact Registry and Cloud Build for container build/deploy; Secret Manager for runtime secret delivery; Cloud Logging for redacted operational traces. |
+| Other tools/products | ClickHouse Cloud as the production-memory store; official Python `mcp-clickhouse` for separate reader/writer MCP paths; React, TypeScript, Vite, Python, FastAPI, Docker, and GitHub. |
+| First time using IBM | N/A, I am not submitting for the IBM track. |
+| First time using Grafana | N/A, I'm not submitting for the Grafana track. |
+| First time using Parallel | N/A, I am not submitting to the Parallel track. |
+| First time using ClickHouse | **Confirm before submit** |
+| First time using Replit | N/A, I am not submitting to the Replit track. |
 
-### Working now
+## Final pre-submit gate
 
-- Public Command Desk deployed to Cloud Run.
-- The live revision flow has shown writer persistence, reader evidence retrieval, and Change Packet validation.
-- A prior end-to-end follow-up was persisted and reader-verified, producing a durable receipt for the Scene 12 flow.
-- The live Impact Pulse is deployed and browser-verified: its reader-MCP aggregates surface the active production window before the revision action.
-- The complete public fictional workflow is now browser-verified: revision persistence, reader retrieval, grounded packet validation, human-owned follow-up, and reader-verified readiness receipt.
-- Cloud Build enforces the backend test suite before deployment.
-- The project has a judge-facing README, technical runbooks, an MIT license, and a timed demo script.
+- [x] Open Cloud Run demo URL
+- [x] Public GitHub repository with MIT license
+- [x] Required Clickhouse track selected in this draft
+- [x] Judge-focused description, proof map, and captions prepared
+- [ ] Mix natural narration into the 2:20 cut and upload it publicly to YouTube or Vimeo
+- [ ] Paste the public video URL into this file and Devpost
+- [ ] Confirm government-employment, country, and first-time-ClickHouse answers
+- [ ] Upload the five current product screenshots (not obsolete design references)
+- [ ] Run one fresh-browser rehearsal from reset through the verified receipt
 
-### Must finish before final Devpost action
+## Known limitations
 
-- Upload the rendered functional three-minute video (optionally intercut with one uninterrupted live-browser recording); add its public URL.
-- Verify the exact Devpost form fields and any sponsor-track requirements against the live event form.
-
-## Known Limitations
-
-- This hackathon slice intentionally supports one prepared production scenario, not a full production-management suite.
-- The fictional production memory is self-authored for the demo; no real production data is included.
-- Follow-up assignment is represented as a durable in-product event; external project-management notifications are out of scope.
-- The public repository is available; the recorded video still needs a public, judge-accessible hosting URL.
-
-## TODO Official Form Fields
-
-The authenticated Devpost event is open and the participant is registered. The live requirements lookup was unavailable during drafting because the connector rejected the expected event parameter schema, so the following are intentionally **not** guessed:
-
-- [ ] Exact event-specific project-form fields and character limits
-- [ ] Official sponsor/category selection and any ClickHouse-specific eligibility language
-- [ ] Final public repository URL
-- [ ] Final demo-video URL
-- [ ] Final screenshot uploads
-- [ ] Any required team-member, AI disclosure, or Codex session-ID field
+SlateGuard is intentionally a focused demo slice rather than a full production-management platform. It supports one self-authored fictional revision scenario, has no external project-management notification integration, and does not contain real production data. The restricted scenario is deliberate: it makes the authority boundary and ClickHouse proof inspectable end-to-end.

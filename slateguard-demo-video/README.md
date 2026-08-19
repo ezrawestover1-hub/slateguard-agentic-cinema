@@ -1,54 +1,40 @@
-# Remotion video
+# SlateGuard judge video
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
+This is the source for SlateGuard's captioned functional demo, built with Remotion. It is not a cinematic concept trailer: the cut shows the deployed product's core evidence-first loop for the ClickHouse track.
 
-Welcome to your Remotion project!
+## What the judge cut proves
+
+1. A Scene 12 wardrobe revision begins the workflow.
+2. The current SlateGuard Review Workspace shows the evidence, decision brief, owners, and readiness context.
+3. Curated ClickHouse reader-MCP queries reduce the decision context to relevant current production records.
+4. A constrained writer → reader → Gemini Change Packet path produces a grounded decision brief.
+5. A human-created follow-up ends in a reader-verified readiness receipt.
+
+The demo uses self-authored fictional production data. The output video is intentionally ignored by Git; its public YouTube or Vimeo URL belongs in the Devpost submission, while this directory lets reviewers inspect and reproduce the cut.
+
+## Requirements
+
+- Node.js 20+
+- pnpm 10+
 
 ## Commands
 
-**Install Dependencies**
+From this directory:
 
-```console
-npm i
+```sh
+pnpm install --frozen-lockfile
+pnpm run lint
+pnpm run dev
+pnpm run render:judge
 ```
 
-**Start Preview**
+`render:judge` produces `out/slateguard-judge-cut-140s.mp4`, a 2:20, 1920×1080 H.264 captioned visual master. The natural narration guide is in [`NARRATION.md`](./NARRATION.md).
 
-```console
-npm run dev
-```
+## Source assets
 
-**Render video**
+- `public/04-live-review-workspace.png` is a capture of the current deployed SlateGuard workspace.
+- `public/judge-captions.json` contains the timed English captions.
+- `src/JudgeCut.tsx` is the judge-cut composition and timeline.
+- `src/JudgeCaptions.tsx` renders captions from the shared timed-captions file.
 
-```console
-npx remotion render
-```
-
-**Upgrade Remotion**
-
-```console
-npx remotion upgrade
-```
-
-## Docs
-
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
-
-## Help
-
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
-
-## Issues
-
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+The repository-wide [MIT License](../LICENSE) applies to this source.

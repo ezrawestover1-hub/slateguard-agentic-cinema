@@ -1,19 +1,21 @@
-# SlateGuard Proof Cut — Narration and Recording Plan
+# SlateGuard Judge Cut — Narration and Recording Plan
 
-This 180-second caption-led proof cut is built from verified captures of the deployed SlateGuard demo. For the strongest final Devpost recording, intercut it with one uninterrupted live browser screen recording using the same spoken words.
+`SlateGuardJudgeCut` is the polished, 2-minute-20-second, caption-led submission cut. It shows the actual live workspace as well as the runtime proof, then makes the ClickHouse role and human ownership boundary explicit. It is intentionally muted, so a natural human voiceover can be recorded later without needing to rebuild the visual edit.
 
 | Time | Voiceover |
 | --- | --- |
-| 0:00–0:15 | “A creative production change is rarely just a note. SlateGuard makes sure the person responsible sees real evidence before taking action.” |
-| 0:15–0:35 | “Here, Scene 12 changes from a blue jacket to a black jacket. But Scene 11 footage is already captured, and two connected scenes are next on the call sheet.” |
-| 0:35–1:15 | “Before the supervisor acts, the reader MCP narrows ClickHouse memory to four relevant evidence records and two affected scenes. When the revision is applied, the protected writer records it, the separately permissioned reader retrieves curated evidence, and the grounded Change Packet validates only the returned facts.” |
-| 1:15–1:55 | “The system does not autonomously create work. Once the supervisor sees the evidence and impact, they create the follow-up for Wardrobe and the Assistant Director. SlateGuard then reads the result back and verifies that readiness changed from At risk to Follow-up created.” |
-| 1:55–2:25 | “The trust boundary is deliberate. The browser has typed actions only. The backend owns deterministic decisions. The model explains supplied evidence, never SQL, and never creates the follow-up.” |
-| 2:25–3:00 | “SlateGuard turns a creative revision into an evidence-first, human-owned, durable production decision—before a small mismatch becomes a costly shoot-day problem.” |
+| 0:00–0:10 | “Production changes rarely stay isolated. SlateGuard turns a creative change into a current, grounded decision.” |
+| 0:10–0:30 | “Scene 12 changes from a blue jacket to black. Scene 11 has already been captured, and Scenes 13 and 14 are scheduled next. Before anyone acts, SlateGuard shows cited evidence, the affected scenes, risk, and named owners.” |
+| 0:30–0:50 | “This is the live review workspace. The change queue scopes the request. The decision brief keeps cited evidence visible. Risk, affected scenes, and human owners stay beside the action.” |
+| 0:50–1:10 | “The ClickHouse reader MCP retrieves only the relevant production window: prior continuity, the revision, and next scheduled dependencies. Archive, unrelated, and unscheduled work are excluded before Gemini explains impact.” |
+| 1:10–1:30 | “A separate append-only writer records the revision. The reader returns curated evidence. The Change Packet is grounded in those facts. Gemini explains the evidence; it does not run SQL or create the consequential task.” |
+| 1:30–1:50 | “A human owner reviews the cited impact and creates the follow-up for Wardrobe and the Assistant Director. SlateGuard reads the receipt through the safe path and confirms readiness changed from At risk to Follow-up created.” |
+| 1:50–2:10 | “That is why ClickHouse is not background storage. It is the time-aware memory the agent must consult for current context. Its curated views keep irrelevant history out and give the agent a fast, governed evidence path.” |
+| 2:10–2:20 | “Current context. Grounded decision. Human action. That’s SlateGuard.” |
 
 ## Recording Direction
 
-- Record at 1920×1080, 30 fps, with browser chrome hidden and system notifications off.
-- Begin on a fresh SlateGuard demo session. Show the original revision for two seconds, apply it once, wait for all three trace states, then create the follow-up once.
-- Keep the evidence table and trace rail visible during the core moment. Do not show raw Cloud Console screens, credentials, SQL, or browser bookmarks.
-- This cut is caption-led, so narration can be recorded separately or replaced by the live screen recording in the final edit.
+- Record a single, steady take in a quiet room; speak slightly slower than the on-screen captions and leave a short breath at each scene boundary.
+- Use the exact timing above. The captions stay visible even when the narration is muted, so judges can follow the whole argument without sound.
+- If replacing the capture sequence with a live browser recording later, begin on a fresh SlateGuard demo session, apply the revision once, wait for all three trace states, and create the follow-up once.
+- Keep browser chrome, notifications, raw Cloud Console screens, credentials, and SQL out of the frame.
