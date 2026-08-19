@@ -64,14 +64,15 @@ export function App() {
 
   return <main className="desk-shell">
     <header className="topbar">
+      <div className="topbar-context"><span>Project</span><strong>Northern Lights</strong></div>
+      <div className="topbar-context production-context"><span>Production</span><strong>S1 · Block 1</strong></div>
       <a className="brand" href="#desk" aria-label="SlateGuard Command Desk">SLATE<span>GUARD</span></a>
-      <span className="topbar-divider" aria-hidden="true" />
-      <p>Production change control</p>
+      <p className="topbar-title">Production change control</p>
       <div className={`runtime ${actionReady ? "connected" : ""}`}><CheckIcon />{runtimeLabel}</div>
     </header>
     <section className="workspace" id="desk" aria-label="Scene 12 command desk">
       <aside className="scene-panel">
-        <div className="panel-intro"><h1>Scene 12</h1><p>Revision context</p></div>
+        <div className="panel-intro"><span className="panel-kicker">Active case · R-00042</span><h1>Scene 12</h1><p>Wardrobe revision</p></div>
         <div className="context-group"><span className="field-label">Change</span><div className="change-line"><strong>Blue jacket</strong><span className="change-arrow" aria-hidden="true">→</span><strong>Black jacket</strong></div></div>
         <div className="context-group"><span className="field-label">Status</span><div className={`status-line ${receipt ? "resolved" : ""}`}><span className="status-icon" aria-hidden="true">△</span>{currentReadiness}</div></div>
         <div className="context-group"><span className="field-label">Source of change</span><p>Continuity from Scene 11</p></div>
@@ -80,7 +81,7 @@ export function App() {
         <div className="context-group updated"><span className="field-label">Live state</span><p>{receipt ? "Follow-up receipt verified" : revision ? "Evidence packet ready" : "Ready for a controlled revision"}</p></div>
       </aside>
       <section className="packet-panel" aria-live="polite">
-        <div className="packet-heading"><h2>Change Packet</h2><p>Evidence-first. Grounded. Measurable impact.</p></div>
+        <div className="packet-heading"><span className="panel-kicker">Change packet</span><h2>Blue jacket <span>→</span> Black jacket</h2><p>Evidence-first decision support for a production continuity correction.</p></div>
         <section className="relevance-pulse" aria-label="ClickHouse relevance scope">
           <div className="pulse-intro"><span className="field-label">Live Impact Pulse</span><strong>{pulse ? "Reader MCP · active production window" : "Reader MCP · scope loading"}</strong><p>{pulse?.scope ?? "Scene 11 history · Scene 12 revision · next scheduled dependencies"}</p></div>
           <div><span className="field-label">Evidence surfaced</span><strong>{pulse?.relevant_evidence_records ?? "—"}</strong></div>
@@ -92,7 +93,7 @@ export function App() {
         <div className="packet-summary"><div><span className="field-label">Change</span><p>Blue jacket <span>→</span> Black jacket</p></div><div><span className="field-label">Owners</span><p>{currentOwners.length}</p></div><div><span className="field-label">Affected scenes</span><p>{pulse?.affected_scenes ?? 2}</p></div><div><span className="field-label">Readiness</span><p className={receipt ? "resolved-text" : "risk-text"}>{currentReadiness}</p></div></div>
       </section>
       <aside className="trace-panel">
-        <div className="panel-intro"><h2>Trace</h2><p>Auditable change trail</p></div>
+        <div className="panel-intro"><span className="panel-kicker">Automation &amp; audit</span><h2>Trace</h2><p>Auditable change trail</p></div>
         <ol className="trace-list">{traceSteps.map((step, index) => {
           const traceEntry = trace.find((entry) => entry.step === step) ?? receiptTrace.find((entry) => entry.step === step);
           const metadata = traceLabels[step];
@@ -100,7 +101,7 @@ export function App() {
         })}</ol>
         <div className={`trace-note ${receipt ? "receipt" : ""}`}>{receipt ? <><CheckIcon />Reader verified action <strong>{receipt.action_id.slice(0, 8)}</strong><br />{receipt.readiness_from} → {receipt.readiness_to}</> : revision ? revision.packet.summary : "The command desk exposes only trustworthy workflow state—never raw SQL, endpoints, or credentials."}</div>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="primary-action" onClick={receipt ? undefined : revision ? createFollowup : applyRevision} disabled={!actionReady || busy || Boolean(receipt)}>{receipt ? "Follow-up created" : busy ? "Working…" : revision ? "Create follow-up" : actionReady ? "Apply revision" : "Runtime unavailable"}</button>
+        <div className="action-zone"><span className="field-label">Operator decision</span><button className="primary-action" onClick={receipt ? undefined : revision ? createFollowup : applyRevision} disabled={!actionReady || busy || Boolean(receipt)}>{receipt ? "Follow-up created" : busy ? "Working…" : revision ? "Create follow-up" : actionReady ? "Apply revision" : "Runtime unavailable"}</button></div>
       </aside>
     </section>
   </main>;
