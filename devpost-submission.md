@@ -72,7 +72,9 @@ The live demo is currently deployed on Google Cloud Run. Its public Sprint 2 bui
 
 ## Public Repository Link
 
-**TODO — repository is not public yet.** The project contains an MIT license, but a public repository URL must be created and added here before the final Devpost form is completed. Before publishing, scan for `.env` files, API keys, tokens, and deployment credentials.
+https://github.com/ezrawestover1-hub/slateguard-agentic-cinema
+
+The public repository contains the MIT-licensed source, ClickHouse schemas and probes, deployment configuration, visual assets, demo captures, and the timed demo script. It was scanned before release for tracked secrets and deployment credentials.
 
 ## Demo Video
 
@@ -128,10 +130,7 @@ Earlier local design references remain available for comparison only:
 
 ### Must finish before final Devpost action
 
-- Publish a sanitized public repository and add its URL.
-- Capture 3–5 final live screenshots, including the receipt state.
 - Upload the rendered functional three-minute video (optionally intercut with one uninterrupted live-browser recording); add its public URL.
-- Rehearse the public demo from a clean browser and capture the latest receipt state on video.
 - Verify the exact Devpost form fields and any sponsor-track requirements against the live event form.
 
 ## Known Limitations
@@ -139,7 +138,7 @@ Earlier local design references remain available for comparison only:
 - This hackathon slice intentionally supports one prepared production scenario, not a full production-management suite.
 - The fictional production memory is self-authored for the demo; no real production data is included.
 - Follow-up assignment is represented as a durable in-product event; external project-management notifications are out of scope.
-- The public repository and recorded video are not available yet.
+- The public repository is available; the recorded video still needs a public, judge-accessible hosting URL.
 
 ## TODO Official Form Fields
 
