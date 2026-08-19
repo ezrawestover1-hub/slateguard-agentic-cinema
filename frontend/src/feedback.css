@@ -1,8 +1,0 @@
-.relevance-pulse { border-bottom: 1px solid #d8e1d8; border-top: 1px solid #d8e1d8; display: grid; grid-template-columns: minmax(0, 1.6fr) .72fr .72fr; margin-top: 25px; }
-.relevance-pulse > div { border-right: 1px solid #dce5db; min-width: 0; padding: 15px; }
-.pulse-intro { padding-left: 0 !important; }
-.pulse-intro strong, .relevance-pulse > div > strong { color: #254531; display: block; font-size: 13px; font-weight: 760; letter-spacing: -.015em; margin-top: 8px; }
-.pulse-intro p { color: #6b7d70; font-size: 12px; line-height: 1.45; margin: 7px 0 0; }
-.relevance-pulse > div:not(.pulse-intro) > strong { color: #258a53; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 25px; font-weight: 650; }
-.scope-policy { align-items: center; border-top: 1px solid #dce5db; color: #66786a; display: flex; font-size: 12px; gap: 8px; grid-column: 1 / -1; line-height: 1.45; margin: 0; padding: 12px 0; }
-.scope-policy .check-icon { color: #258a53; flex: 0 0 auto; font-size: 9px; height: 16px; width: 16px; }
