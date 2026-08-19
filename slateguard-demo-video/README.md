@@ -30,6 +30,14 @@ pnpm run render:judge
 
 `render:judge` produces `out/slateguard-judge-cut-140s.mp4`, a 2:20, 1920×1080 H.264 captioned visual master. The natural narration guide is in [`NARRATION.md`](./NARRATION.md).
 
+## Add the human narration
+
+1. Record one steady take from [`NARRATION.md`](./NARRATION.md) in Voice Memos, QuickTime, or your preferred recorder.
+2. Export it as `narration.m4a` and place it in this directory (next to `package.json`). It is ignored by Git.
+3. Run `pnpm run render:judge-with-narration`.
+
+The render is written to `out/slateguard-judge-cut-with-narration.mp4`. It preserves the 2:20 picture lock and English on-screen captions; the `narrationSrc` composition prop only adds the audio track.
+
 ## Source assets
 
 - `public/04-live-review-workspace.png` is a capture of the current deployed SlateGuard workspace.

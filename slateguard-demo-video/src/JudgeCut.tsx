@@ -1,6 +1,7 @@
 import React from "react";
 import {
   AbsoluteFill,
+  Audio,
   Composition,
   Easing,
   Img,
@@ -263,8 +264,13 @@ const Closing: React.FC = () => {
   );
 };
 
-export const SlateGuardJudgeCut: React.FC = () => (
+type JudgeCutProps = {
+  narrationSrc?: string;
+};
+
+export const SlateGuardJudgeCut: React.FC<JudgeCutProps> = ({ narrationSrc }) => (
   <AbsoluteFill>
+    {narrationSrc ? <Audio src={staticFile(narrationSrc)} /> : null}
     <Sequence durationInFrames={10 * FPS}><Opening /></Sequence>
     <Sequence from={10 * FPS} durationInFrames={20 * FPS}>
       <AppShot
@@ -316,6 +322,7 @@ export const SlateGuardJudgeCut: React.FC = () => (
 export const SlateGuardJudgeComposition: React.FC = () => (
   <Composition
     component={SlateGuardJudgeCut}
+    defaultProps={{ narrationSrc: undefined }}
     durationInFrames={140 * FPS}
     fps={FPS}
     height={1080}

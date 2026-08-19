@@ -31,7 +31,8 @@
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
     "render:proof": "remotion render SlateGuardProofCut out/slateguard-proof-cut.mp4 --codec=h264 --crf=18",
-    "render:judge": "remotion render SlateGuardJudgeCut out/slateguard-judge-cut-140s.mp4 --codec=h264 --crf=18"
+    "render:judge": "remotion render SlateGuardJudgeCut out/slateguard-judge-cut-140s.mp4 --codec=h264 --crf=18",
+    "render:judge-with-narration": "remotion render SlateGuardJudgeCut out/slateguard-judge-cut-with-narration.mp4 --codec=h264 --crf=18 --props='{\"narrationSrc\":\"narration.m4a\"}'"
   },
   "sideEffects": [
     "*.css"
