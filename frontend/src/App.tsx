@@ -10,6 +10,7 @@ export function App() {
   const [revision, setRevision] = useState<RevisionResponse | null>(null);
   const [receipt, setReceipt] = useState<ReceiptResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,31 +19,32 @@ export function App() {
   }, []);
 
   async function applyRevision() {
-    setBusy(true); setError(null); setReceipt(null);
+    setBusy(true); setBusyLabel("Checking the current production memory"); setError(null); setReceipt(null);
     try {
       await api.reset();
+      setBusyLabel("Gathering curated ClickHouse evidence");
       setRevision(await api.revise(crypto.randomUUID()));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to analyze this revision.");
     } finally {
-      setBusy(false);
+      setBusy(false); setBusyLabel(null);
     }
   }
 
   async function createFollowup() {
     if (!revision) return;
-    setBusy(true); setError(null);
+    setBusy(true); setBusyLabel("Recording the human-owned follow-up"); setError(null);
     try {
       setReceipt(await api.followup(revision.revision_id, crypto.randomUUID()));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to create the follow-up.");
     } finally {
-      setBusy(false);
+      setBusy(false); setBusyLabel(null);
     }
   }
 
   async function resetReview() {
-    setBusy(true); setError(null);
+    setBusy(true); setBusyLabel("Preparing a fresh controlled review"); setError(null);
     try {
       await api.reset();
       setRevision(null);
@@ -50,13 +52,14 @@ export function App() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to reset this review.");
     } finally {
-      setBusy(false);
+      setBusy(false); setBusyLabel(null);
     }
   }
 
   return <ReviewWorkspace
     actionReady={runtime === "ready"}
     busy={busy}
+    busyLabel={busyLabel}
     error={error}
     pulse={pulse}
     revision={revision}

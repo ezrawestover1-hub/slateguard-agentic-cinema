@@ -4,6 +4,7 @@ import type { ImpactPulse, ReceiptResponse, RevisionResponse } from "./api";
 type ReviewWorkspaceProps = {
   actionReady: boolean;
   busy: boolean;
+  busyLabel: string | null;
   error: string | null;
   pulse: ImpactPulse | null;
   revision: RevisionResponse | null;
@@ -96,17 +97,19 @@ function ContextRail({ pulse, owners }: { pulse: ImpactPulse | null; owners: str
   </aside>;
 }
 
-function DecisionDock({ actionReady, busy, revision, receipt, onReview, onFollowUp, onReset }: Pick<ReviewWorkspaceProps, "actionReady" | "busy" | "revision" | "receipt" | "onReview" | "onFollowUp" | "onReset">) {
+function DecisionDock({ actionReady, busy, busyLabel, revision, receipt, onReview, onFollowUp, onReset }: Pick<ReviewWorkspaceProps, "actionReady" | "busy" | "busyLabel" | "revision" | "receipt" | "onReview" | "onFollowUp" | "onReset">) {
   const verified = Boolean(receipt);
   const reviewed = Boolean(revision);
   const title = verified ? "Follow-up verified" : reviewed ? "Ready for human decision" : "Start a controlled review";
   const detail = verified ? `${receipt?.readiness_from} → ${receipt?.readiness_to}. The reader path verified the recorded action.` : reviewed ? "Evidence is grounded. Confirm the recommended human follow-up when you are ready." : "Run the protected revision workflow to produce a grounded change packet.";
   const label = verified ? "Start another review" : reviewed ? "Create recommended follow-up" : "Review this change";
   const action = verified ? onReset : reviewed ? onFollowUp : onReview;
-  return <footer className="decision-dock"><div className={`dock-icon ${verified ? "verified" : ""}`}>{verified ? <Icon name="check" size={21} /> : <Icon name="users" size={22} />}</div><div className="dock-copy"><strong>{title}</strong><p>{detail}</p></div><button className="dock-action" type="button" onClick={action} disabled={!actionReady || busy}><span>{busy ? "Working…" : label}</span><Icon name={verified ? "arrow" : "chevron"} size={19} /></button></footer>;
+  const activeTitle = busy ? busyLabel ?? "Running a controlled review" : title;
+  const activeDetail = busy ? "This is a live, bounded evidence workflow. Keep this page open while SlateGuard returns a decision packet." : detail;
+  return <footer className="decision-dock" aria-live="polite"><div className={`dock-icon ${verified ? "verified" : ""} ${busy ? "working" : ""}`}>{verified ? <Icon name="check" size={21} /> : busy ? <Icon name="clock" size={21} /> : <Icon name="users" size={22} />}</div><div className="dock-copy"><strong>{activeTitle}</strong><p>{activeDetail}</p></div><button className="dock-action" type="button" onClick={action} disabled={!actionReady || busy}><span>{busy ? "Review in progress" : label}</span><Icon name={verified ? "arrow" : "chevron"} size={19} /></button></footer>;
 }
 
-export function ReviewWorkspace({ actionReady, busy, error, pulse, revision, receipt, onReview, onFollowUp, onReset }: ReviewWorkspaceProps) {
+export function ReviewWorkspace({ actionReady, busy, busyLabel, error, pulse, revision, receipt, onReview, onFollowUp, onReset }: ReviewWorkspaceProps) {
   const [saved, setSaved] = useState(false);
   const citedIds = revision?.packet.cited_evidence_ids ?? baselineEvidence.map((item) => item.id);
   const owners = receipt?.owners ?? revision?.packet.recommended_owners ?? ["Wardrobe", "Assistant Director"];
@@ -114,5 +117,5 @@ export function ReviewWorkspace({ actionReady, busy, error, pulse, revision, rec
   const readiness = receipt?.readiness_to ?? revision?.evaluation.readiness ?? "Evidence review";
   return <main className="review-app">
     <header className="app-header"><a className="wordmark" href="#review" aria-label="SlateGuard review workspace"><span className="mark">S</span>SLATE<span>GUARD</span></a><div className="project-switcher"><span>Project</span><strong>Northern Lights</strong></div><div className="runtime-status"><Icon name="check" size={17} />{actionReady ? "Verified runtime" : "Checking runtime"}</div></header>
-    <div className="review-layout" id="review"><Queue saved={saved} onSaved={() => setSaved(!saved)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · SG-12</span><h1>Decision brief</h1><p>A wardrobe change is proposed for Scene 12. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>Blue jacket <b>→</b> Black jacket</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : "caution"}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">Grounded recommendation</span><strong>{revision.packet.summary}</strong><p>The packet cites only the evidence shown above and keeps final action with the production team.</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} /></div><DecisionDock actionReady={actionReady} busy={busy} revision={revision} receipt={receipt} onReview={onReview} onFollowUp={onFollowUp} onReset={onReset} /></main>;
+    <div className="review-layout" id="review"><Queue saved={saved} onSaved={() => setSaved(!saved)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · SG-12</span><h1>Decision brief</h1><p>A wardrobe change is proposed for Scene 12. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>Blue jacket <b>→</b> Black jacket</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : "caution"}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">Grounded recommendation</span><strong>{revision.packet.summary}</strong><p>The packet cites only the evidence shown above and keeps final action with the production team.</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} /></div><DecisionDock actionReady={actionReady} busy={busy} busyLabel={busyLabel} revision={revision} receipt={receipt} onReview={onReview} onFollowUp={onFollowUp} onReset={onReset} /></main>;
 }
