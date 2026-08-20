@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -30,6 +31,12 @@ class RevisionRequest(BaseModel):
         ):
             raise ValueError("Only the prepared Scene 12 wardrobe revision is supported.")
         return self
+
+
+class FollowupRequest(BaseModel):
+    """Explicit human acknowledgement required before a durable follow-up."""
+
+    reviewed_evidence: Literal[True]
 
 
 class EvidenceRecord(BaseModel):

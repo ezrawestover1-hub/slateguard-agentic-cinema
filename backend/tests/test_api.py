@@ -103,10 +103,28 @@ class ApiTests(TestCase):
         self.client.post("/api/demo/reset")
         payload = {"scene_id": "scene-12", "fact_type": "wardrobe", "old_value": "blue jacket", "new_value": "black jacket"}
         revision = self.client.post("/api/revisions", json=payload, headers={"Idempotency-Key": "00000000-0000-0000-0000-000000000099"})
-        receipt = self.client.post(f"/api/revisions/{revision.json()['revision_id']}/follow-up", headers={"Idempotency-Key": "00000000-0000-0000-0000-000000000100"})
+        receipt = self.client.post(
+            f"/api/revisions/{revision.json()['revision_id']}/follow-up",
+            json={"reviewed_evidence": True},
+            headers={"Idempotency-Key": "00000000-0000-0000-0000-000000000100"},
+        )
         self.assertEqual(receipt.status_code, 200)
         self.assertEqual(receipt.json()["readiness_to"], "Follow-up created")
         self.assertEqual(receipt.json()["trace"][-1]["step"], "reader_mcp")
+
+    def test_followup_requires_explicit_evidence_acknowledgment(self) -> None:
+        self.client.post("/api/demo/reset")
+        payload = {"scene_id": "scene-12", "fact_type": "wardrobe", "old_value": "blue jacket", "new_value": "black jacket"}
+        revision = self.client.post(
+            "/api/revisions",
+            json=payload,
+            headers={"Idempotency-Key": "00000000-0000-0000-0000-000000000199"},
+        )
+        response = self.client.post(
+            f"/api/revisions/{revision.json()['revision_id']}/follow-up",
+            headers={"Idempotency-Key": "00000000-0000-0000-0000-000000000200"},
+        )
+        self.assertEqual(response.status_code, 422)
 
     def test_revision_fails_closed_without_session(self) -> None:
         client = TestClient(create_app(Settings("test", __file__, True), None))

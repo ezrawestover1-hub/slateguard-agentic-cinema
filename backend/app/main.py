@@ -15,7 +15,7 @@ from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .domain.contracts import ImpactPulse, RevisionRequest
+from .domain.contracts import FollowupRequest, ImpactPulse, RevisionRequest
 from .mcp.boundary import McpBoundaryError
 from .mcp.runner import McpTransportError
 from .services.demo_session import DemoSession, IdempotencyConflict, SessionSigner, SessionValidationError
@@ -112,6 +112,7 @@ def create_app(settings: Settings | None = None, services: ApplicationServices |
     @app.post("/api/revisions/{revision_id}/follow-up", include_in_schema=False)
     async def create_followup(
         revision_id: UUID,
+        followup: FollowupRequest,
         request: Request,
         idempotency_key: str = Header(alias="Idempotency-Key"),
     ) -> JSONResponse:

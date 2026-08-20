@@ -9,5 +9,5 @@ export const api = {
   impactPulse: () => request<ImpactPulse>("/api/impact-pulse"),
   reset: () => request<{ state: string }>("/api/demo/reset", { method: "POST" }),
   revise: (idempotencyKey: string) => request<RevisionResponse>("/api/revisions", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ scene_id: "scene-12", fact_type: "wardrobe", old_value: "blue jacket", new_value: "black jacket" }) }),
-  followup: (revisionId: string, idempotencyKey: string) => request<ReceiptResponse>(`/api/revisions/${revisionId}/follow-up`, { method: "POST", headers: { "Idempotency-Key": idempotencyKey } }),
+  followup: (revisionId: string, idempotencyKey: string) => request<ReceiptResponse>(`/api/revisions/${revisionId}/follow-up`, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ reviewed_evidence: true }) }),
 };

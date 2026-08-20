@@ -109,13 +109,34 @@ function DecisionDock({ actionReady, busy, busyLabel, revision, receipt, onRevie
   return <footer className="decision-dock" aria-live="polite"><div className={`dock-icon ${verified ? "verified" : ""} ${busy ? "working" : ""}`}>{verified ? <Icon name="check" size={21} /> : busy ? <Icon name="clock" size={21} /> : <Icon name="users" size={22} />}</div><div className="dock-copy"><strong>{activeTitle}</strong><p>{activeDetail}</p></div><button className="dock-action" type="button" onClick={action} disabled={!actionReady || busy}><span>{busy ? "Review in progress" : label}</span><Icon name={verified ? "arrow" : "chevron"} size={19} /></button></footer>;
 }
 
+function FollowupConfirmation({ owners, onCancel, onConfirm }: { owners: string[]; onCancel: () => void; onConfirm: () => void }) {
+  const [acknowledged, setAcknowledged] = useState(false);
+  return <div className="confirmation-backdrop" role="presentation">
+    <section className="confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-description" aria-modal="true" role="dialog">
+      <span className="eyebrow">Human decision required</span>
+      <h2 id="confirmation-title">Create the production follow-up?</h2>
+      <p id="confirmation-description">SlateGuard will record this action for the listed owners, then independently read it back before updating readiness.</p>
+      <div className="confirmation-owners" aria-label="Assigned owners">
+        {owners.map((owner) => <span key={owner}>{owner}</span>)}
+      </div>
+      <label className="acknowledgment"><input checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} type="checkbox" /><span>I reviewed the cited production evidence and approve this follow-up.</span></label>
+      <div className="confirmation-actions"><button className="secondary-action" onClick={onCancel} type="button">Go back</button><button className="confirm-action" disabled={!acknowledged} onClick={onConfirm} type="button">Record follow-up <Icon name="arrow" size={18} /></button></div>
+    </section>
+  </div>;
+}
+
 export function ReviewWorkspace({ actionReady, busy, busyLabel, error, pulse, revision, receipt, onReview, onFollowUp, onReset }: ReviewWorkspaceProps) {
   const [saved, setSaved] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const citedIds = revision?.packet.cited_evidence_ids ?? baselineEvidence.map((item) => item.id);
   const owners = receipt?.owners ?? revision?.packet.recommended_owners ?? ["Wardrobe", "Assistant Director"];
   const stage = receipt ? 4 : revision ? 3 : 2;
   const readiness = receipt?.readiness_to ?? revision?.evaluation.readiness ?? "Evidence review";
+  const confirmFollowup = () => {
+    setConfirmationOpen(false);
+    onFollowUp();
+  };
   return <main className="review-app">
     <header className="app-header"><a className="wordmark" href="#review" aria-label="SlateGuard review workspace"><span className="mark">S</span>SLATE<span>GUARD</span></a><div className="project-switcher"><span>Project</span><strong>Northern Lights</strong></div><div className="runtime-status"><Icon name="check" size={17} />{actionReady ? "Verified runtime" : "Checking runtime"}</div></header>
-    <div className="review-layout" id="review"><Queue saved={saved} onSaved={() => setSaved(!saved)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · SG-12</span><h1>Decision brief</h1><p>A wardrobe change is proposed for Scene 12. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>Blue jacket <b>→</b> Black jacket</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : "caution"}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">Grounded recommendation</span><strong>{revision.packet.summary}</strong><p>The packet cites only the evidence shown above and keeps final action with the production team.</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} /></div><DecisionDock actionReady={actionReady} busy={busy} busyLabel={busyLabel} revision={revision} receipt={receipt} onReview={onReview} onFollowUp={onFollowUp} onReset={onReset} /></main>;
+    <div className="review-layout" id="review"><Queue saved={saved} onSaved={() => setSaved(!saved)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · SG-12</span><h1>Decision brief</h1><p>A wardrobe change is proposed for Scene 12. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>Blue jacket <b>→</b> Black jacket</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : "caution"}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">Grounded recommendation</span><strong>{revision.packet.summary}</strong><p>The packet cites only the evidence shown above and keeps final action with the production team.</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} /></div><DecisionDock actionReady={actionReady} busy={busy} busyLabel={busyLabel} revision={revision} receipt={receipt} onReview={onReview} onFollowUp={() => setConfirmationOpen(true)} onReset={onReset} />{confirmationOpen && revision && <FollowupConfirmation owners={owners} onCancel={() => setConfirmationOpen(false)} onConfirm={confirmFollowup} />}</main>;
 }
