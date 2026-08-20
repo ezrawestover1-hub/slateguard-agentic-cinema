@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from dataclasses import dataclass
 from uuid import UUID, uuid4
@@ -56,8 +57,10 @@ class FollowupFlow:
         if not await self.memory.is_actionable(session_id, revision_id):
             raise FollowupNotAllowed("Follow-up requires an actionable stored impact.")
         action_id = uuid4()
-        followup_trace = await self.memory.append_followup(session_id, action_id, revision_id)
-        readiness_trace = await self.memory.append_readiness(session_id, revision_id)
+        followup_trace, readiness_trace = await asyncio.gather(
+            self.memory.append_followup(session_id, action_id, revision_id),
+            self.memory.append_readiness(session_id, revision_id),
+        )
         evidence_ids = await self.memory.read_receipt_evidence(session_id, revision_id, action_id)
         receipt = DecisionReceipt(
             action_id=action_id,

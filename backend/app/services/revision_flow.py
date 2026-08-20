@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
@@ -60,8 +61,12 @@ class RevisionFlow:
 
         revision_id = uuid4()
         write_trace = await self.memory.append_revision(session_id, revision_id, idempotency_key)
-        evidence = tuple(await self.memory.read_evidence(request.scene_id))
-        dependencies = tuple(await self.memory.read_dependencies(request.scene_id))
+        evidence, dependencies = await asyncio.gather(
+            self.memory.read_evidence(request.scene_id),
+            self.memory.read_dependencies(request.scene_id),
+        )
+        evidence = tuple(evidence)
+        dependencies = tuple(dependencies)
         evaluation = evaluate_revision(request, evidence, dependencies)
         evidence_ids = tuple(record.evidence_id for record in evidence) + tuple(
             dependency.evidence_id for dependency in dependencies

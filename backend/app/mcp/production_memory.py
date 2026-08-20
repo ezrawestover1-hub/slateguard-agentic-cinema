@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -41,8 +42,10 @@ class ClickHouseProductionMemory(ProductionMemory):
     async def read_impact_pulse(self) -> ImpactPulse:
         """Return an auditable aggregate over the active production window only."""
 
-        evidence_result, _ = await self.boundary.read_relevance_evidence()
-        dependency_result, _ = await self.boundary.read_relevance_dependencies()
+        (evidence_result, _), (dependency_result, _) = await asyncio.gather(
+            self.boundary.read_relevance_evidence(),
+            self.boundary.read_relevance_dependencies(),
+        )
         evidence_rows = _rows(evidence_result)
         dependency_rows = _rows(dependency_result)
         if len(evidence_rows) != 1 or len(dependency_rows) != 1:
@@ -78,11 +81,13 @@ class ClickHouseFollowupMemory(FollowupMemory):
     async def read_receipt_evidence(
         self, session_id: UUID, revision_id: UUID, action_id: UUID
     ) -> tuple[str, ...]:
-        receipt, _ = await self.boundary.read_followup_receipt(session_id, revision_id, action_id)
+        (receipt, _), (evidence, _), (dependencies, _) = await asyncio.gather(
+            self.boundary.read_followup_receipt(session_id, revision_id, action_id),
+            self.boundary.read_scene_evidence("scene-12"),
+            self.boundary.read_scheduled_dependencies("scene-12"),
+        )
         if not _rows(receipt):
             raise McpBoundaryError("ClickHouse did not confirm the follow-up receipt.")
-        evidence, _ = await self.boundary.read_scene_evidence("scene-12")
-        dependencies, _ = await self.boundary.read_scheduled_dependencies("scene-12")
         evidence_ids = [
             str(row["evidence_id"])
             for row in _rows(evidence)
