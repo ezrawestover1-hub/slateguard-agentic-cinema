@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { api, ImpactPulse, ReceiptResponse, RevisionResponse, RuntimeStatus } from "./api";
+import { api, ChangeInput, ImpactPulse, ReceiptResponse, RevisionResponse, RuntimeStatus } from "./api";
 import { ReviewWorkspace } from "./review-workspace";
 
 type RuntimeState = "loading" | RuntimeStatus | "unavailable";
+const initialChange: ChangeInput = { scene_id: "scene-12", fact_type: "wardrobe", old_value: "blue jacket", new_value: "black jacket" };
 
 export function App() {
   const [runtime, setRuntime] = useState<RuntimeState>("loading");
   const [pulse, setPulse] = useState<ImpactPulse | null>(null);
   const [revision, setRevision] = useState<RevisionResponse | null>(null);
+  const [change, setChange] = useState<ChangeInput>(initialChange);
   const [receipt, setReceipt] = useState<ReceiptResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
@@ -18,12 +20,14 @@ export function App() {
     api.impactPulse().then(setPulse).catch(() => setPulse(null));
   }, []);
 
-  async function applyRevision() {
+  async function applyRevision(nextChange: ChangeInput) {
     setBusy(true); setBusyLabel("Checking the current production memory"); setError(null); setReceipt(null);
     try {
       await api.reset();
       setBusyLabel("Gathering curated ClickHouse evidence");
-      setRevision(await api.revise(crypto.randomUUID()));
+      const result = await api.revise(nextChange, crypto.randomUUID());
+      setChange(result.change);
+      setRevision(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to analyze this revision.");
     } finally {
@@ -61,6 +65,7 @@ export function App() {
     busy={busy}
     busyLabel={busyLabel}
     error={error}
+    change={change}
     pulse={pulse}
     revision={revision}
     receipt={receipt}

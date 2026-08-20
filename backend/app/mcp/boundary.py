@@ -10,6 +10,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
+from app.domain.contracts import RevisionRequest
+
 
 class ReaderTemplate(StrEnum):
     SCENE_EVIDENCE = "scene_evidence"
@@ -96,16 +98,17 @@ class ClickHouseMcpBoundary:
         )
 
     async def write_revision_event(
-        self, demo_session_id: UUID, revision_id: UUID, idempotency_key: UUID
+        self, demo_session_id: UUID, revision_id: UUID, idempotency_key: UUID, revision: RevisionRequest
     ) -> TraceStep:
+        _require_scene_id(revision.scene_id)
         await self._execute(
             "writer",
             WriterTemplate.REVISION_EVENT,
             "INSERT INTO core.revision_events "
             "(demo_session_id, revision_id, scene_id, fact_type, old_value, new_value, idempotency_key, recorded_at) "
             "VALUES "
-            f"('{demo_session_id}', '{revision_id}', 'scene-12', 'wardrobe', 'blue jacket', "
-            f"'black jacket', '{idempotency_key}', now64(3))",
+            f"('{demo_session_id}', '{revision_id}', {_quote(revision.scene_id)}, {_quote(revision.fact_type)}, "
+            f"{_quote(revision.old_value)}, {_quote(revision.new_value)}, '{idempotency_key}', now64(3))",
             "Revision recorded through the writer MCP path.",
         )
         return TraceStep(step="writer_mcp", status="confirmed", public_detail="Revision event persisted.")
@@ -174,3 +177,9 @@ class ClickHouseMcpBoundary:
 def _require_scene_id(scene_id: str) -> None:
     if not _SCENE_ID.fullmatch(scene_id):
         raise ValueError("Unsupported scene identifier.")
+
+
+def _quote(value: str) -> str:
+    """Serialize an already-validated bounded value for one server-owned template."""
+
+    return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"

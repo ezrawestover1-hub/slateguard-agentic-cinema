@@ -14,9 +14,10 @@ ALLOWED_OWNERS = ("Wardrobe", "Assistant Director")
 
 class GroundedPacketInput(BaseModel):
     revision_id: str
-    scene_id: Literal["scene-12"]
-    previous_value: Literal["blue jacket"]
-    new_value: Literal["black jacket"]
+    scene_id: str
+    fact_type: str
+    previous_value: str
+    new_value: str
     evidence_ids: tuple[str, ...]
     findings: tuple[RuleFinding, ...]
     readiness: ReadinessState
@@ -32,8 +33,8 @@ class ChangePacketNarrative(BaseModel):
 
     @model_validator(mode="after")
     def has_no_empty_citations(self) -> "ChangePacketNarrative":
-        if not self.cited_evidence_ids:
-            raise ValueError("The Change Packet must cite at least one source record.")
+        if self.status == "ready" and not self.cited_evidence_ids:
+            raise ValueError("An actionable Change Packet must cite at least one source record.")
         return self
 
 
@@ -62,7 +63,10 @@ def deterministic_fallback(grounded: GroundedPacketInput) -> ChangePacketNarrati
     if not grounded.can_create_followup:
         return ChangePacketNarrative(
             status="review_required",
-            summary="Source evidence is incomplete or contradictory. Human review is required.",
+            summary=(
+                f"No configured evidence policy can safely automate this {grounded.fact_type} "
+                f"change for {grounded.scene_id}. Human review is required."
+            ),
             cited_evidence_ids=grounded.evidence_ids,
             recommended_owners=(),
             distinguishes_unknowns=True,

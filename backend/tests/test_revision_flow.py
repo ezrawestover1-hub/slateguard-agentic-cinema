@@ -13,7 +13,7 @@ class FakeMemory(ProductionMemory):
     def __init__(self) -> None:
         self.writes = 0
 
-    async def append_revision(self, session_id: UUID, revision_id: UUID, idempotency_key: UUID) -> TraceStep:
+    async def append_revision(self, session_id: UUID, revision_id: UUID, idempotency_key: UUID, revision: RevisionRequest) -> TraceStep:
         self.writes += 1
         return TraceStep(step="writer_mcp", status="confirmed", public_detail="Revision event persisted.")
 
@@ -53,3 +53,18 @@ class RevisionFlowTests(IsolatedAsyncioTestCase):
         self.assertEqual(result.packet.status, "ready")
         self.assertEqual(result.trace[-1].status, "fallback")
         self.assertEqual(result.evaluation.findings[0].finding_type, "continuity_conflict")
+
+    async def test_unconfigured_change_records_a_request_without_admitting_unrelated_evidence(self) -> None:
+        memory = FakeMemory()
+
+        async def agent(grounded: GroundedPacketInput) -> ChangePacketNarrative:
+            return ChangePacketNarrative(status="review_required", summary="Human review required.", cited_evidence_ids=(), recommended_owners=(), distinguishes_unknowns=True)
+
+        result = await RevisionFlow(memory, agent, IdempotencyLedger()).apply(
+            uuid4(),
+            RevisionRequest(scene_id="scene-12", fact_type="prop", old_value="sealed evidence bag", new_value="open evidence bag"),
+            uuid4(),
+        )
+        self.assertEqual(memory.writes, 1)
+        self.assertFalse(result.evaluation.can_create_followup)
+        self.assertEqual(result.packet.cited_evidence_ids, ())

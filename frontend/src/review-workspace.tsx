@@ -1,17 +1,10 @@
 import { useMemo, useState } from "react";
-import type { ImpactPulse, ReceiptResponse, RevisionResponse } from "./api";
+import type { ChangeInput, ImpactPulse, ReceiptResponse, RevisionResponse } from "./api";
 
 type ReviewWorkspaceProps = {
-  actionReady: boolean;
-  busy: boolean;
-  busyLabel: string | null;
-  error: string | null;
-  pulse: ImpactPulse | null;
-  revision: RevisionResponse | null;
-  receipt: ReceiptResponse | null;
-  onReview: () => void;
-  onFollowUp: () => void;
-  onReset: () => void;
+  actionReady: boolean; busy: boolean; busyLabel: string | null; error: string | null;
+  change: ChangeInput; pulse: ImpactPulse | null; revision: RevisionResponse | null; receipt: ReceiptResponse | null;
+  onReview: (change: ChangeInput) => void; onFollowUp: () => void; onReset: () => void;
 };
 
 const baselineEvidence = [
@@ -19,8 +12,8 @@ const baselineEvidence = [
   { id: "ev-call-sheet-13", title: "Scene 13 call sheet", detail: "Next scheduled dependency", note: "Wardrobe is required before the next scheduled exterior unit.", kind: "Schedule" },
   { id: "ev-call-sheet-14", title: "Scene 14 call sheet", detail: "Next scheduled dependency", note: "Wardrobe is required before the next scheduled exterior unit.", kind: "Schedule" },
 ];
-
 const stageCopy = ["Scope", "Evidence", "Decision", "Follow-up"];
+const changeKinds: ChangeInput["fact_type"][] = ["wardrobe", "prop", "set dressing", "blocking", "schedule"];
 
 function Icon({ name, size = 18 }: { name: "check" | "chevron" | "film" | "calendar" | "shield" | "bookmark" | "plus" | "arrow" | "clock" | "users"; size?: number }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -36,107 +29,18 @@ function Icon({ name, size = 18 }: { name: "check" | "chevron" | "film" | "calen
   return <svg {...common}><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" /><circle cx="9.5" cy="7" r="3.5" /><path d="M17 11a3 3 0 0 0 0-6M21 20v-1.5a4 4 0 0 0-2.7-3.8" /></svg>;
 }
 
-function StageRail({ stage }: { stage: number }) {
-  return <ol className="stage-rail" aria-label="Review progress">
-    {stageCopy.map((label, index) => {
-      const number = index + 1;
-      const completed = number < stage;
-      const current = number === stage;
-      return <li className={`${completed ? "complete" : ""} ${current ? "current" : ""}`} key={label}>
-        <span className="stage-dot">{completed ? <Icon name="check" size={15} /> : number}</span>
-        <span>{label}</span>
-      </li>;
-    })}
-  </ol>;
-}
+function StageRail({ stage }: { stage: number }) { return <ol className="stage-rail" aria-label="Review progress">{stageCopy.map((label, index) => { const number = index + 1; return <li className={`${number < stage ? "complete" : ""} ${number === stage ? "current" : ""}`} key={label}><span className="stage-dot">{number < stage ? <Icon name="check" size={15} /> : number}</span><span>{label}</span></li>; })}</ol>; }
 
-function Queue({ saved, onSaved }: { saved: boolean; onSaved: () => void }) {
-  return <aside className="review-queue" aria-label="Change queue">
-    <div className="queue-heading"><div><span className="eyebrow">Production changes</span><h2>Change queue</h2></div><span className="queue-count">1</span></div>
-    <button className="queue-item selected" type="button" aria-current="page">
-      <span className="queue-status">Review now</span>
-      <strong>Scene 12 · Wardrobe continuity</strong>
-      <span className="queue-change">Blue jacket <span>→</span> Black jacket</span>
-      <span className="queue-meta"><Icon name="clock" size={15} />Current production window</span>
-      <Icon name="chevron" size={18} />
-    </button>
-    <div className="queue-note"><Icon name="shield" size={17} /><p>This public proof is deliberately scoped to one supported production change.</p></div>
-    <button className={`save-link ${saved ? "saved" : ""}`} type="button" onClick={onSaved}><Icon name="bookmark" size={17} />{saved ? "Saved for this session" : "Save review for later"}</button>
-  </aside>;
-}
+function Queue({ change, saved, onSaved, onNew }: { change: ChangeInput; saved: boolean; onSaved: () => void; onNew: () => void }) { return <aside className="review-queue" aria-label="Change queue"><div className="queue-heading"><div><span className="eyebrow">Production changes</span><h2>Change queue</h2></div><span className="queue-count">1</span></div><button className="queue-item selected" type="button" aria-current="page"><span className="queue-status">Review now</span><strong>{change.scene_id.replace("scene-", "Scene ")} · {change.fact_type}</strong><span className="queue-change">{change.old_value} <span>→</span> {change.new_value}</span><span className="queue-meta"><Icon name="clock" size={15} />Current production window</span><Icon name="chevron" size={18} /></button><button className="new-change" onClick={onNew} type="button"><Icon name="plus" size={17} />New production change</button><div className="queue-note"><Icon name="shield" size={17} /><p>SlateGuard accepts bounded production changes, then acts only when curated evidence supports a safe policy.</p></div><button className={`save-link ${saved ? "saved" : ""}`} type="button" onClick={onSaved}><Icon name="bookmark" size={17} />{saved ? "Saved for this session" : "Save review for later"}</button></aside>; }
 
-function EvidenceList({ citedIds }: { citedIds: string[] }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const evidence = useMemo(() => baselineEvidence.filter((item) => citedIds.includes(item.id)), [citedIds]);
-  return <section className="evidence-section" aria-labelledby="evidence-heading">
-    <div className="section-heading"><div><span className="eyebrow">Curated ClickHouse evidence</span><h2 id="evidence-heading">Why this needs a decision</h2><p>Only relevant, current production records are included in the review.</p></div><span className="evidence-count">{evidence.length} cited</span></div>
-    <div className="evidence-list">
-      {evidence.map((item, index) => {
-        const expanded = openId === item.id;
-        return <article className={`evidence-item ${expanded ? "expanded" : ""}`} key={item.id}>
-          <span className="evidence-order">{index + 1}</span>
-          <span className="evidence-type">{item.kind === "Schedule" ? <Icon name="calendar" size={19} /> : <Icon name="film" size={19} />}</span>
-          <div><strong>{item.title}</strong><span>{item.detail}</span>{expanded && <p>{item.note}</p>}</div>
-          <span className="evidence-state"><Icon name="check" size={15} />Cited</span>
-          <button className="disclosure" type="button" aria-label={`Show ${item.title} detail`} aria-expanded={expanded} onClick={() => setOpenId(expanded ? null : item.id)}><Icon name="chevron" size={18} /></button>
-        </article>;
-      })}
-    </div>
-  </section>;
-}
+function EvidenceList({ citedIds }: { citedIds: string[] }) { const [openId, setOpenId] = useState<string | null>(null); const evidence = useMemo(() => baselineEvidence.filter((item) => citedIds.includes(item.id)), [citedIds]); return <section className="evidence-section" aria-labelledby="evidence-heading"><div className="section-heading"><div><span className="eyebrow">Curated ClickHouse evidence</span><h2 id="evidence-heading">Why this needs a decision</h2><p>Only relevant, current production records are included in the review.</p></div><span className="evidence-count">{evidence.length} cited</span></div><div className="evidence-list">{evidence.length === 0 && <p className="evidence-empty">No source record was admitted to an automated decision. This request remains human-owned.</p>}{evidence.map((item, index) => { const expanded = openId === item.id; return <article className={`evidence-item ${expanded ? "expanded" : ""}`} key={item.id}><span className="evidence-order">{index + 1}</span><span className="evidence-type">{item.kind === "Schedule" ? <Icon name="calendar" size={19} /> : <Icon name="film" size={19} />}</span><div><strong>{item.title}</strong><span>{item.detail}</span>{expanded && <p>{item.note}</p>}</div><span className="evidence-state"><Icon name="check" size={15} />Cited</span><button className="disclosure" type="button" aria-label={`Show ${item.title} detail`} aria-expanded={expanded} onClick={() => setOpenId(expanded ? null : item.id)}><Icon name="chevron" size={18} /></button></article>; })}</div></section>; }
 
-function ContextRail({ pulse, owners }: { pulse: ImpactPulse | null; owners: string[] }) {
-  const [noteOpen, setNoteOpen] = useState(false);
-  return <aside className="context-rail" aria-label="Decision context">
-    <div className="context-heading"><span className="eyebrow">Live decision context</span><h2>What changes next</h2></div>
-    <section className="context-card"><div className="card-title"><strong>Affected scenes</strong><span>{pulse?.affected_scenes ?? "…"}</span></div><div className="scene-context"><b>11</b><p><strong>Prior footage</strong><span>Captured · continuity reference</span></p></div><div className="scene-context"><b>13–14</b><p><strong>Scheduled next</strong><span>Wardrobe-dependent call sheets</span></p></div></section>
-    <section className="context-card risk-card"><div className="card-title"><strong>Schedule risk</strong><span className="risk-badge">At risk</span></div><p>Unresolved continuity may affect the next wardrobe-dependent block.</p><div className="context-stat"><span>Relevant records</span><strong>{pulse?.relevant_evidence_records ?? "…"}</strong></div></section>
-    <section className="context-card owner-card"><div className="card-title"><strong>Human owners</strong><Icon name="users" size={18} /></div><p>Recommended owners can make or reject the follow-up.</p>{owners.map((owner, index) => <div className="owner-line" key={owner}><span>{owner.split(" ").map((part) => part[0]).join("")}</span><p><strong>{owner}</strong><small>{index === 0 ? "Decision owner" : "Consulted"}</small></p><Icon name="check" size={17} /></div>)}</section>
-    <button className="add-note" type="button" onClick={() => setNoteOpen(!noteOpen)}><Icon name="plus" size={17} />{noteOpen ? "Hide review note" : "Add review note"}</button>
-    {noteOpen && <textarea className="review-note" aria-label="Review note" placeholder="Record context for this review session…" />}
-  </aside>;
-}
+function ContextRail({ pulse, owners, actionable }: { pulse: ImpactPulse | null; owners: string[]; actionable: boolean }) { const [noteOpen, setNoteOpen] = useState(false); return <aside className="context-rail" aria-label="Decision context"><div className="context-heading"><span className="eyebrow">Live decision context</span><h2>{actionable ? "What changes next" : "What needs review"}</h2></div><section className="context-card"><div className="card-title"><strong>{actionable ? "Affected scenes" : "Policy coverage"}</strong><span>{actionable ? pulse?.affected_scenes ?? "…" : "—"}</span></div>{actionable ? <><div className="scene-context"><b>11</b><p><strong>Prior footage</strong><span>Captured · continuity reference</span></p></div><div className="scene-context"><b>13–14</b><p><strong>Scheduled next</strong><span>Wardrobe-dependent call sheets</span></p></div></> : <p>This change was recorded, but no safe automatic handoff is configured for it yet.</p>}</section><section className="context-card risk-card"><div className="card-title"><strong>{actionable ? "Schedule risk" : "Decision state"}</strong><span className="risk-badge">{actionable ? "At risk" : "Review required"}</span></div><p>{actionable ? "Unresolved continuity may affect the next wardrobe-dependent block." : "A production lead must map evidence and owners before creating a follow-up."}</p><div className="context-stat"><span>Relevant records</span><strong>{pulse?.relevant_evidence_records ?? "…"}</strong></div></section><section className="context-card owner-card"><div className="card-title"><strong>{actionable ? "Human owners" : "Human review"}</strong><Icon name="users" size={18} /></div><p>{actionable ? "Recommended owners can make or reject the follow-up." : "No owner is auto-assigned when policy coverage is absent."}</p>{actionable && owners.map((owner, index) => <div className="owner-line" key={owner}><span>{owner.split(" ").map((part) => part[0]).join("")}</span><p><strong>{owner}</strong><small>{index === 0 ? "Decision owner" : "Consulted"}</small></p><Icon name="check" size={17} /></div>)}</section><button className="add-note" type="button" onClick={() => setNoteOpen(!noteOpen)}><Icon name="plus" size={17} />{noteOpen ? "Hide review note" : "Add review note"}</button>{noteOpen && <textarea className="review-note" aria-label="Review note" placeholder="Record context for this review session…" />}</aside>; }
 
-function DecisionDock({ actionReady, busy, busyLabel, revision, receipt, onReview, onFollowUp, onReset }: Pick<ReviewWorkspaceProps, "actionReady" | "busy" | "busyLabel" | "revision" | "receipt" | "onReview" | "onFollowUp" | "onReset">) {
-  const verified = Boolean(receipt);
-  const reviewed = Boolean(revision);
-  const title = verified ? "Follow-up verified" : reviewed ? "Ready for human decision" : "Start a controlled review";
-  const detail = verified ? `${receipt?.readiness_from} → ${receipt?.readiness_to}. The reader path verified the recorded action.` : reviewed ? "Evidence is grounded. Confirm the recommended human follow-up when you are ready." : "Run the protected revision workflow to produce a grounded change packet.";
-  const label = verified ? "Start another review" : reviewed ? "Create recommended follow-up" : "Review this change";
-  const action = verified ? onReset : reviewed ? onFollowUp : onReview;
-  const activeTitle = busy ? busyLabel ?? "Running a controlled review" : title;
-  const activeDetail = busy ? "This is a live, bounded evidence workflow. Keep this page open while SlateGuard returns a decision packet." : detail;
-  return <footer className="decision-dock" aria-live="polite"><div className={`dock-icon ${verified ? "verified" : ""} ${busy ? "working" : ""}`}>{verified ? <Icon name="check" size={21} /> : busy ? <Icon name="clock" size={21} /> : <Icon name="users" size={22} />}</div><div className="dock-copy"><strong>{activeTitle}</strong><p>{activeDetail}</p></div><button className="dock-action" type="button" onClick={action} disabled={!actionReady || busy}><span>{busy ? "Review in progress" : label}</span><Icon name={verified ? "arrow" : "chevron"} size={19} /></button></footer>;
-}
+function DecisionDock({ actionReady, busy, busyLabel, revision, receipt, onStart, onFollowUp, onReset }: { actionReady: boolean; busy: boolean; busyLabel: string | null; revision: RevisionResponse | null; receipt: ReceiptResponse | null; onStart: () => void; onFollowUp: () => void; onReset: () => void }) { const verified = Boolean(receipt); const reviewed = Boolean(revision); const actionable = Boolean(revision?.evaluation.can_create_followup); const title = verified ? "Follow-up verified" : reviewed && actionable ? "Ready for human decision" : reviewed ? "Human review required" : "Start a controlled review"; const detail = verified ? `${receipt?.readiness_from} → ${receipt?.readiness_to}. The reader path verified the recorded action.` : reviewed && actionable ? "Evidence is grounded. Confirm the recommended human follow-up when you are ready." : reviewed ? revision?.evaluation.reason ?? "This change needs a production lead's review." : "Describe a production change to retrieve its bounded evidence window."; const label = verified ? "Start another review" : reviewed && actionable ? "Create recommended follow-up" : reviewed ? "Review another change" : "Review a production change"; const action = verified ? onReset : reviewed && actionable ? onFollowUp : onStart; const activeTitle = busy ? busyLabel ?? "Running a controlled review" : title; const activeDetail = busy ? "This is a live, bounded evidence workflow. Keep this page open while SlateGuard returns a decision packet." : detail; return <footer className="decision-dock" aria-live="polite"><div className={`dock-icon ${verified ? "verified" : ""} ${busy ? "working" : ""}`}>{verified ? <Icon name="check" size={21} /> : busy ? <Icon name="clock" size={21} /> : <Icon name="users" size={22} />}</div><div className="dock-copy"><strong>{activeTitle}</strong><p>{activeDetail}</p></div><button className="dock-action" type="button" onClick={action} disabled={!actionReady || busy}><span>{busy ? "Review in progress" : label}</span><Icon name={verified ? "arrow" : "chevron"} size={19} /></button></footer>; }
 
-function FollowupConfirmation({ owners, onCancel, onConfirm }: { owners: string[]; onCancel: () => void; onConfirm: () => void }) {
-  const [acknowledged, setAcknowledged] = useState(false);
-  return <div className="confirmation-backdrop" role="presentation">
-    <section className="confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-description" aria-modal="true" role="dialog">
-      <span className="eyebrow">Human decision required</span>
-      <h2 id="confirmation-title">Create the production follow-up?</h2>
-      <p id="confirmation-description">SlateGuard will record this action for the listed owners, then independently read it back before updating readiness.</p>
-      <div className="confirmation-owners" aria-label="Assigned owners">
-        {owners.map((owner) => <span key={owner}>{owner}</span>)}
-      </div>
-      <label className="acknowledgment"><input checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} type="checkbox" /><span>I reviewed the cited production evidence and approve this follow-up.</span></label>
-      <div className="confirmation-actions"><button className="secondary-action" onClick={onCancel} type="button">Go back</button><button className="confirm-action" disabled={!acknowledged} onClick={onConfirm} type="button">Record follow-up <Icon name="arrow" size={18} /></button></div>
-    </section>
-  </div>;
-}
+function ChangeIntake({ change, onCancel, onSubmit }: { change: ChangeInput; onCancel: () => void; onSubmit: (change: ChangeInput) => void }) { const [draft, setDraft] = useState(change); const update = <K extends keyof ChangeInput>(key: K, value: ChangeInput[K]) => setDraft((current) => ({ ...current, [key]: value })); return <div className="confirmation-backdrop" role="presentation"><section className="change-intake" aria-labelledby="change-intake-title" aria-modal="true" role="dialog"><span className="eyebrow">Production change intake</span><h2 id="change-intake-title">What changed?</h2><p>SlateGuard will record this request through the protected writer path, then retrieve only the evidence window it is allowed to use.</p><div className="intake-grid"><label>Scene<select value={draft.scene_id} onChange={(event) => update("scene_id", event.target.value)}>{[11, 12, 13, 14, 15, 16].map((scene) => <option key={scene} value={`scene-${scene}`}>Scene {scene}</option>)}</select></label><label>Change type<select value={draft.fact_type} onChange={(event) => update("fact_type", event.target.value as ChangeInput["fact_type"])}>{changeKinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select></label><label>Current value<input value={draft.old_value} maxLength={120} onChange={(event) => update("old_value", event.target.value)} /></label><label>Proposed value<input value={draft.new_value} maxLength={120} onChange={(event) => update("new_value", event.target.value)} /></label></div><p className="intake-note"><Icon name="shield" size={16} />Only evidence-backed policies can create an automatic follow-up. Other requests remain explicitly human-owned.</p><div className="confirmation-actions"><button className="secondary-action" onClick={onCancel} type="button">Cancel</button><button className="confirm-action" disabled={!draft.old_value.trim() || !draft.new_value.trim() || draft.old_value.trim().toLowerCase() === draft.new_value.trim().toLowerCase()} onClick={() => onSubmit(draft)} type="button">Review change <Icon name="arrow" size={18} /></button></div></section></div>; }
 
-export function ReviewWorkspace({ actionReady, busy, busyLabel, error, pulse, revision, receipt, onReview, onFollowUp, onReset }: ReviewWorkspaceProps) {
-  const [saved, setSaved] = useState(false);
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const citedIds = revision?.packet.cited_evidence_ids ?? baselineEvidence.map((item) => item.id);
-  const owners = receipt?.owners ?? revision?.packet.recommended_owners ?? ["Wardrobe", "Assistant Director"];
-  const stage = receipt ? 4 : revision ? 3 : 2;
-  const readiness = receipt?.readiness_to ?? revision?.evaluation.readiness ?? "Evidence review";
-  const confirmFollowup = () => {
-    setConfirmationOpen(false);
-    onFollowUp();
-  };
-  return <main className="review-app">
-    <header className="app-header"><a className="wordmark" href="#review" aria-label="SlateGuard review workspace"><span className="mark">S</span>SLATE<span>GUARD</span></a><div className="project-switcher"><span>Project</span><strong>Northern Lights</strong></div><div className="runtime-status"><Icon name="check" size={17} />{actionReady ? "Verified runtime" : "Checking runtime"}</div></header>
-    <div className="review-layout" id="review"><Queue saved={saved} onSaved={() => setSaved(!saved)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · SG-12</span><h1>Decision brief</h1><p>A wardrobe change is proposed for Scene 12. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>Blue jacket <b>→</b> Black jacket</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : "caution"}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">Grounded recommendation</span><strong>{revision.packet.summary}</strong><p>The packet cites only the evidence shown above and keeps final action with the production team.</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} /></div><DecisionDock actionReady={actionReady} busy={busy} busyLabel={busyLabel} revision={revision} receipt={receipt} onReview={onReview} onFollowUp={() => setConfirmationOpen(true)} onReset={onReset} />{confirmationOpen && revision && <FollowupConfirmation owners={owners} onCancel={() => setConfirmationOpen(false)} onConfirm={confirmFollowup} />}</main>;
-}
+function FollowupConfirmation({ owners, onCancel, onConfirm }: { owners: string[]; onCancel: () => void; onConfirm: () => void }) { const [acknowledged, setAcknowledged] = useState(false); return <div className="confirmation-backdrop" role="presentation"><section className="confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-description" aria-modal="true" role="dialog"><span className="eyebrow">Human decision required</span><h2 id="confirmation-title">Create the production follow-up?</h2><p id="confirmation-description">SlateGuard will record this action for the listed owners, then independently read it back before updating readiness.</p><div className="confirmation-owners" aria-label="Assigned owners">{owners.map((owner) => <span key={owner}>{owner}</span>)}</div><label className="acknowledgment"><input checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} type="checkbox" /><span>I reviewed the cited production evidence and approve this follow-up.</span></label><div className="confirmation-actions"><button className="secondary-action" onClick={onCancel} type="button">Go back</button><button className="confirm-action" disabled={!acknowledged} onClick={onConfirm} type="button">Record follow-up <Icon name="arrow" size={18} /></button></div></section></div>; }
+
+export function ReviewWorkspace({ actionReady, busy, busyLabel, error, change, pulse, revision, receipt, onReview, onFollowUp, onReset }: ReviewWorkspaceProps) { const [saved, setSaved] = useState(false); const [confirmationOpen, setConfirmationOpen] = useState(false); const [intakeOpen, setIntakeOpen] = useState(false); const citedIds = revision?.packet.cited_evidence_ids ?? baselineEvidence.map((item) => item.id); const owners = receipt?.owners ?? revision?.packet.recommended_owners ?? ["Wardrobe", "Assistant Director"]; const actionable = Boolean(revision?.evaluation.can_create_followup); const stage = receipt ? 4 : revision ? 3 : 1; const readiness = receipt?.readiness_to ?? revision?.evaluation.readiness ?? "Awaiting review"; const confirmFollowup = () => { setConfirmationOpen(false); onFollowUp(); }; const submitChange = (nextChange: ChangeInput) => { setIntakeOpen(false); onReview(nextChange); }; return <main className="review-app"><header className="app-header"><a className="wordmark" href="#review" aria-label="SlateGuard review workspace"><span className="mark">S</span>SLATE<span>GUARD</span></a><div className="project-switcher"><span>Project</span><strong>Northern Lights</strong></div><div className="runtime-status"><Icon name="check" size={17} />{actionReady ? "Verified runtime" : "Checking runtime"}</div></header><div className="review-layout" id="review"><Queue change={change} saved={saved} onSaved={() => setSaved(!saved)} onNew={() => setIntakeOpen(true)} /><section className="decision-workspace" aria-live="polite"><StageRail stage={stage} /><div className="brief-heading"><span className="eyebrow">Active review · {change.scene_id.replace("scene-", "SG-")}</span><h1>Decision brief</h1><p>A {change.fact_type} change is proposed for {change.scene_id.replace("scene-", "Scene ")}. Review the current production evidence before creating a human-owned follow-up.</p></div><div className="change-summary"><div><span>Proposed change</span><strong>{change.old_value} <b>→</b> {change.new_value}</strong></div><div><span>Current readiness</span><strong className={receipt ? "positive" : actionable ? "caution" : ""}>{readiness}</strong></div><div><span>Evidence scope</span><strong>{pulse ? `${pulse.relevant_evidence_records} relevant records` : "Loading current records"}</strong></div></div><EvidenceList citedIds={citedIds} />{revision && <section className="recommendation"><span className="eyebrow">{actionable ? "Grounded recommendation" : "Policy boundary"}</span><strong>{revision.packet.summary}</strong><p>{actionable ? "The packet cites only the evidence shown above and keeps final action with the production team." : "SlateGuard recorded the request but will not invent evidence, owners, or a follow-up where the policy does not support one."}</p></section>}{error && <p className="review-error" role="alert">{error}</p>}</section><ContextRail pulse={pulse} owners={owners} actionable={actionable} /></div><DecisionDock actionReady={actionReady} busy={busy} busyLabel={busyLabel} revision={revision} receipt={receipt} onStart={() => setIntakeOpen(true)} onFollowUp={() => setConfirmationOpen(true)} onReset={onReset} />{intakeOpen && <ChangeIntake change={change} onCancel={() => setIntakeOpen(false)} onSubmit={submitChange} />}{confirmationOpen && revision && <FollowupConfirmation owners={owners} onCancel={() => setConfirmationOpen(false)} onConfirm={confirmFollowup} />}</main>; }

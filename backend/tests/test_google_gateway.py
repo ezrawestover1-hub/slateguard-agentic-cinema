@@ -39,7 +39,7 @@ class Target:
 
 
 def grounded() -> GroundedPacketInput:
-    return GroundedPacketInput(revision_id="r1", scene_id="scene-12", previous_value="blue jacket", new_value="black jacket", evidence_ids=("ev-1",), findings=(), readiness=ReadinessState.AT_RISK, can_create_followup=True)
+    return GroundedPacketInput(revision_id="r1", scene_id="scene-12", fact_type="wardrobe", previous_value="blue jacket", new_value="black jacket", evidence_ids=("ev-1",), findings=(), readiness=ReadinessState.AT_RISK, can_create_followup=True)
 
 
 class GoogleGatewayTests(IsolatedAsyncioTestCase):

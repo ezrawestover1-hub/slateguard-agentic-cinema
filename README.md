@@ -11,7 +11,7 @@ Scene 12 wardrobe revision
 → reader-verified shoot-readiness receipt
 ```
 
-The public demo uses a self-authored fictional six-scene production. It is intentionally not a generic chat interface: the user can apply only the prepared `blue jacket → black jacket` Scene 12 revision, inspect evidence before acting, and create one accountable Wardrobe + Assistant Director follow-up.
+The public demo uses a self-authored fictional six-scene production. It is intentionally not a generic chat interface: a supervisor can enter a bounded change for any of the six scenes (wardrobe, prop, set dressing, blocking, or schedule), then inspect the resulting policy boundary before acting. The evidence-backed Scene 12 `blue jacket → black jacket` policy reaches an accountable Wardrobe + Assistant Director follow-up; a change without an established evidence policy is still recorded but stays explicitly **Review required** rather than receiving invented evidence, owners, or automation.
 
 ## Live demo
 

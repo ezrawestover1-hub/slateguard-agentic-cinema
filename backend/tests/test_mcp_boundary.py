@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 from uuid import uuid4
 
 from app.mcp.boundary import ClickHouseMcpBoundary, McpBoundaryError
+from app.domain.contracts import RevisionRequest
 
 
 class McpBoundaryTests(IsolatedAsyncioTestCase):
@@ -27,7 +28,12 @@ class McpBoundaryTests(IsolatedAsyncioTestCase):
             calls.append((identity, query))
             return "ok"
 
-        trace = await ClickHouseMcpBoundary(runner).write_revision_event(uuid4(), uuid4(), uuid4())
+        trace = await ClickHouseMcpBoundary(runner).write_revision_event(
+            uuid4(),
+            uuid4(),
+            uuid4(),
+            RevisionRequest(scene_id="scene-12", fact_type="wardrobe", old_value="blue jacket", new_value="black jacket"),
+        )
         self.assertEqual(trace.public_detail, "Revision event persisted.")
         self.assertEqual(calls[0][0], "writer")
         self.assertIn("'scene-12', 'wardrobe', 'blue jacket', 'black jacket'", calls[0][1])

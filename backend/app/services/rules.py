@@ -21,12 +21,18 @@ def evaluate_revision(
     evidence: Sequence[EvidenceRecord],
     dependencies: Sequence[DependencyRecord],
 ) -> RuleEvaluation:
-    """Evaluate the one allowed revision against curated production records.
+    """Evaluate an intake request against the available curated policy.
 
     Missing or inconsistent evidence abstains before any follow-up is possible.
     The caller is responsible for retrieving these records through the reader MCP
     adapter; this pure function never performs I/O or composes SQL.
     """
+
+    if not _has_actionable_policy(revision):
+        return _review_required(
+            (),
+            f"No evidence-backed automation policy is configured for this {revision.fact_type} change in {revision.scene_id}.",
+        )
 
     prior_dailies = [
         record
@@ -70,6 +76,16 @@ def evaluate_revision(
         findings=findings,
         can_create_followup=True,
         reason="Prior-shot continuity and scheduled downstream work require review.",
+    )
+
+
+def _has_actionable_policy(revision: RevisionRequest) -> bool:
+    """Keep the public demo honest: only a proven rule can make an action available."""
+
+    return (
+        revision.scene_id == "scene-12"
+        and revision.fact_type == "wardrobe"
+        and revision.old_value.casefold() == "blue jacket"
     )
 
 

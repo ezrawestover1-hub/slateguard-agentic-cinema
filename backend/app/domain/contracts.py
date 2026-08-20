@@ -6,7 +6,7 @@ from datetime import date
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class EvidenceKind(StrEnum):
@@ -16,20 +16,31 @@ class EvidenceKind(StrEnum):
 
 
 class RevisionRequest(BaseModel):
-    scene_id: str
-    fact_type: str
-    old_value: str
-    new_value: str
+    """A bounded production-change request accepted from the command desk.
+
+    These fields remain deliberately constrained because the values are persisted
+    by a server-owned ClickHouse template. A request can be recorded even when
+    there is not yet an evidence-backed automation policy for it.
+    """
+
+    scene_id: str = Field(pattern=r"^scene-(?:1[1-6])$")
+    fact_type: Literal["wardrobe", "prop", "set dressing", "blocking", "schedule"]
+    old_value: str = Field(min_length=1, max_length=120)
+    new_value: str = Field(min_length=1, max_length=120)
+
+    @field_validator("old_value", "new_value")
+    @classmethod
+    def normalizes_safe_text(cls, value: str) -> str:
+        normalized = " ".join(value.split())
+        allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,'’&()/+-")
+        if not normalized or any(character not in allowed for character in normalized):
+            raise ValueError("Change values may contain letters, numbers, and standard production-note punctuation.")
+        return normalized
 
     @model_validator(mode="after")
-    def is_supported_demo_revision(self) -> "RevisionRequest":
-        if (self.scene_id, self.fact_type, self.old_value, self.new_value) != (
-            "scene-12",
-            "wardrobe",
-            "blue jacket",
-            "black jacket",
-        ):
-            raise ValueError("Only the prepared Scene 12 wardrobe revision is supported.")
+    def describes_a_real_change(self) -> "RevisionRequest":
+        if self.old_value.casefold() == self.new_value.casefold():
+            raise ValueError("The proposed value must differ from the current value.")
         return self
 
 

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
-from app.domain.contracts import DependencyRecord, EvidenceRecord, ImpactPulse
+from app.domain.contracts import DependencyRecord, EvidenceRecord, ImpactPulse, RevisionRequest
 from app.mcp.boundary import ClickHouseMcpBoundary, McpBoundaryError, TraceStep
 from app.services.followup_flow import FollowupMemory
 from app.services.revision_flow import ProductionMemory
@@ -22,9 +22,9 @@ class ClickHouseProductionMemory(ProductionMemory):
     boundary: ClickHouseMcpBoundary
 
     async def append_revision(
-        self, session_id: UUID, revision_id: UUID, idempotency_key: UUID
+        self, session_id: UUID, revision_id: UUID, idempotency_key: UUID, revision: RevisionRequest
     ) -> TraceStep:
-        return await self.boundary.write_revision_event(session_id, revision_id, idempotency_key)
+        return await self.boundary.write_revision_event(session_id, revision_id, idempotency_key, revision)
 
     async def read_evidence(self, scene_id: str) -> Sequence[EvidenceRecord]:
         raw_result, _ = await self.boundary.read_scene_evidence(scene_id)

@@ -1,8 +1,6 @@
 from datetime import date
 from unittest import TestCase
 
-from pydantic import ValidationError
-
 from app.domain.contracts import DependencyRecord, EvidenceKind, EvidenceRecord, RevisionRequest
 from app.services.rules import evaluate_revision
 
@@ -79,6 +77,16 @@ class DeterministicRulesTests(TestCase):
         self.assertFalse(result.can_create_followup)
         self.assertEqual(result.review_evidence_ids, ("ev-dailies-11-blue", "ev-dailies-11-black"))
 
-    def test_unsupported_revision_is_rejected_before_rules_run(self) -> None:
-        with self.assertRaises(ValidationError):
-            RevisionRequest(scene_id="scene-12", fact_type="wardrobe", old_value="blue jacket", new_value="red jacket")
+    def test_unconfigured_change_is_recordable_but_requires_human_review(self) -> None:
+        result = evaluate_revision(
+            RevisionRequest(scene_id="scene-12", fact_type="prop", old_value="sealed evidence bag", new_value="open evidence bag"),
+            happy_evidence(),
+            happy_dependencies(),
+        )
+        self.assertFalse(result.can_create_followup)
+        self.assertEqual(result.readiness, "Review required")
+        self.assertIn("No evidence-backed automation policy", result.reason)
+
+    def test_rejects_unsafe_change_text(self) -> None:
+        with self.assertRaises(Exception):
+            RevisionRequest(scene_id="scene-12", fact_type="prop", old_value="case'; DROP TABLE core.scenes", new_value="open case")

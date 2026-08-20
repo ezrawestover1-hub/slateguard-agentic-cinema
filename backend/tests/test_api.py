@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from app.agents.change_packet import ChangePacketNarrative, GroundedPacketInput
-from app.domain.contracts import DependencyRecord, EvidenceKind, EvidenceRecord, ImpactPulse
+from app.domain.contracts import DependencyRecord, EvidenceKind, EvidenceRecord, ImpactPulse, RevisionRequest
 from app.main import ApplicationServices, create_app
 from app.mcp.boundary import TraceStep
 from app.services.demo_session import IdempotencyLedger, SessionSigner
@@ -16,7 +16,7 @@ from app.settings import Settings
 
 
 class ApiMemory(ProductionMemory):
-    async def append_revision(self, session_id: UUID, revision_id: UUID, idempotency_key: UUID) -> TraceStep:
+    async def append_revision(self, session_id: UUID, revision_id: UUID, idempotency_key: UUID, revision: RevisionRequest) -> TraceStep:
         return TraceStep(step="writer_mcp", status="confirmed", public_detail="Revision event persisted.")
 
     async def read_evidence(self, scene_id: str):

@@ -13,6 +13,7 @@ def actionable_input() -> GroundedPacketInput:
     return GroundedPacketInput(
         revision_id="revision-1",
         scene_id="scene-12",
+        fact_type="wardrobe",
         previous_value="blue jacket",
         new_value="black jacket",
         evidence_ids=("ev-dailies-11-blue", "ev-call-sheet-13", "ev-call-sheet-14"),
