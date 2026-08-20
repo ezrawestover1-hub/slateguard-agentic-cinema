@@ -2,13 +2,13 @@
 
 Use this checklist immediately before creating or pushing a public repository for SlateGuard. It is a publication guardrail, not an instruction to publish automatically.
 
-## Current Readiness Snapshot — 2026-08-18
+## Current Readiness Snapshot — 2026-08-20
 
 - [x] MIT license is present.
 - [x] README explains the product, trust boundary, architecture, local run path, and live demo link.
 - [x] `.gitignore` excludes local environment files, credential JSON files, Python environments, build output, and recordings.
 - [x] Read-only filename and heuristic source scan found no candidate private key, provider key, ClickHouse URI with embedded password, or credential file in the publish candidate. Local `.env` remains ignored; `.devpost-hackathon-state.json` and generated TypeScript build metadata are also ignored.
-- [ ] A public remote repository has not been created.
+- [x] Public repository: https://github.com/ezrawestover1-hub/slateguard-agentic-cinema
 - [x] The current official Gitleaks release scanned the exact `git ls-files --others --exclude-standard` publish candidate on 2026-08-18 with zero findings. A broader workspace scan found redacted matches only in ignored local `.env` and generated video-build artifacts.
 - [ ] The deployed Impact Pulse, decision-receipt screenshots, and a 180-second 1920×1080 H.264 proof cut are ready locally; its final public upload is still required for the Devpost draft.
 
@@ -35,6 +35,6 @@ Use this checklist immediately before creating or pushing a public repository fo
 - Full production endpoints, connection strings, browser recording profiles, or user data.
 - Any footage, script, or production data that is not cleared for public release.
 
-## Recommended First Public Commit Scope
+## Public Repository Scope
 
-The repository is currently an uncommitted local worktree. Make the first commit represent the reviewed release candidate: source, tests, documentation, schema, and configuration templates only. Keep the public-live runtime configuration in Google Cloud Secret Manager, not in Git.
+Keep public commits limited to reviewed source, tests, documentation, schema, and configuration templates. Keep public-live runtime configuration in Google Cloud Secret Manager, not in Git.

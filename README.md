@@ -70,16 +70,27 @@ This is intentionally a relevance policy, not a made-up benchmark: the interface
 | Durable result | Action ID, owners, and `At risk → Follow-up created`. | Writer events followed by reader verification. |
 | Runtime proof | Package version, sanitized IDs, write/read states—not raw SQL or secrets. | Public trace DTO. |
 
-## Local development
+## Review and local development
 
-The repository contains the frontend, backend, schema, tests, and deployment templates. Local development requires a configured `.env` file that is deliberately ignored by Git. The hosted demo uses Google Cloud-managed configuration and must fail closed when required runtime configuration is absent.
+**Fastest reviewer path:** open the [hosted SlateGuard demo](https://sprint2---slateguard-vseh3ye7mq-uc.a.run.app/). It uses self-authored fictional production data and requires no account.
+
+The repository contains the frontend, backend, schema, tests, and deployment templates. The test suite and frontend build run without cloud credentials. A full local revision flow requires your own Google Cloud project plus a ClickHouse Cloud service with separate least-privilege reader and writer users; no project credentials are published in this repository.
+
+### Verify the checked-in application
 
 ```sh
 PYTHONPATH=backend .venv/bin/python -m unittest discover -s backend/tests -v
 cd frontend && pnpm run build
 ```
 
-The Vite preview is `http://127.0.0.1:4173/`. Do not open `frontend/index.html` directly; the app uses HTTP API calls.
+### Run a local configured instance
+
+1. Use Python 3.12+ and Node 20+ with pnpm enabled.
+2. Copy `.env.example` to `.env` and supply **your own** Google Cloud and ClickHouse values. Never commit that file.
+3. Follow the [Google ADK setup runbook](docs/sprint-0-google-runbook.md) and the [ClickHouse MCP setup runbook](docs/sprint-0-clickhouse-runbook.md) to create the constrained identities and validate the real reader → writer → reader path.
+4. Build the frontend, then start the API with `PYTHONPATH=backend .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8080`.
+
+Open `http://127.0.0.1:8080/` after the server starts. Do not open `frontend/index.html` directly; the application uses typed HTTP API calls.
 
 ## Runtime verification
 
